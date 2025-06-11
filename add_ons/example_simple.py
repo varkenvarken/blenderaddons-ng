@@ -17,11 +17,9 @@ bl_info = {
 # and the line_profiler package is installed
 # otherwise, the operator will run without profiling
 try:
-    from line_profiler import LineProfiler
-
-    profile = LineProfiler()
-except ImportError:
-    profile = lambda x:x
+    from line_profiler import profile
+except ImportError:  # pragma: no cover
+    profile = lambda x: x
 
 from os import environ
 import bpy
@@ -74,7 +72,7 @@ def unregister():
     bpy.utils.unregister_class(OBJECT_OT_move_x)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # this code is for profiling purposes only
     # it is not part of the add-on functionality
     # we simply register the operator, create a cube,
@@ -90,8 +88,14 @@ if __name__ == "__main__":
     obj.location.x = 0.0
     amount = 2.5
     result = bpy.ops.object.move_x("INVOKE_DEFAULT", amount=amount)
+    # this is not a unit test, but at least we know that the operator works
+    assert result == {"FINISHED"}
 
     unregister()
 
-    if profile and hasattr(profile, "print_stats") and environ.get("LINE_PROFILE") == "1":
+    if (
+        profile
+        and hasattr(profile, "print_stats")
+        and environ.get("LINE_PROFILE") == "1"
+    ):
         profile.print_stats()  # type:ignore
