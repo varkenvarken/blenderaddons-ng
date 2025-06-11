@@ -11,6 +11,19 @@ bl_info = {
     "category": "Object",
 }
 
+# import line_profiler if available or create a no-op decorator
+# note that profiling is only done if the environment variable
+# `LINE_PROFILE` is set to "1"
+# and the line_profiler package is installed
+# otherwise, the operator will run without profiling
+try:
+    from line_profiler import LineProfiler
+
+    profile = LineProfiler()
+except ImportError:
+    profile = lambda x:x
+
+from os import environ
 import bpy
 from bpy.types import Object, Context
 
@@ -28,11 +41,21 @@ class OBJECT_OT_move_x(bpy.types.Operator):
     def poll(cls, context):
         return context.active_object is not None and context.mode == "OBJECT"
 
-    def execute(self, context: Context) -> set[str]:  # type: ignore
-        """Move the active object along the X axis."""
+    @profile  # type: ignore (if line_profiler is available)
+    def do_execute(self, context: Context) -> None:
+        """Expensive part is moved out of the execute method to allow profiling.
+
+        Note that no profiling is done if line_profiler is not available or
+        if the environment variable `LINE_PROFILE` is not set to "1".
+        """
         obj: Object | None = context.active_object
         obj.location.x += self.amount  # type: ignore (because of the poll() method that ensures obj is not None)
+
+    def execute(self, context: Context) -> set[str]:  # type: ignore
+        """Move the active object along the X axis."""
+        self.do_execute(context)
         return {"FINISHED"}
+
 
 OPERATOR_NAME: str = OBJECT_OT_move_x.__name__
 
@@ -52,4 +75,23 @@ def unregister():
 
 
 if __name__ == "__main__":
+    # this code is for profiling purposes only
+    # it is not part of the add-on functionality
+    # we simply register the operator, create a cube,
+    # and invoke the operator to move the cube along the X axis.
+    # if the LINE_PROFILE environment variable is set to "1",
+    # the line_profiler will profile the execution of the operator.
+    # and print the profiling results.
+
     register()
+
+    bpy.ops.mesh.primitive_cube_add()
+    obj = bpy.context.active_object
+    obj.location.x = 0.0
+    amount = 2.5
+    result = bpy.ops.object.move_x("INVOKE_DEFAULT", amount=amount)
+
+    unregister()
+
+    if profile and hasattr(profile, "print_stats") and environ.get("LINE_PROFILE") == "1":
+        profile.print_stats()  # type:ignore

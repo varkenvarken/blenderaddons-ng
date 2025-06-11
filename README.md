@@ -83,6 +83,42 @@ It also install/upgrades the packages mentioned in [requirements.txt](requiremen
 
   and make sure to create good tests which ensure good coverage as well.
 
+## profiling
+
+The file [example_simple.py](add_ons/example_simple.py) contains code showing how to profile (parts of) an operator using the 
+[line-profiler package](https://pypi.org/project/line-profiler/).
+
+No profiling is done if the package isn´t available or if the LINE_PROFILE environment variable is not set to "1". To create a profile,
+simply run:
+
+```bash
+LINE_PROFILE=1 python3 add_ons/example_simple.py
+```
+
+It will produce output like:
+
+```
+Timer unit: 1e-09 s
+
+Total time: 8.615e-06 s
+File: /workspaces/blenderaddons-ng/add_ons/example_simple.py
+Function: do_execute at line 44
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    44                                               @profile  # type: ignore (if line_profiler is available)
+    45                                               def do_execute(self, context: Context) -> None:
+    46                                                   """Expensive part is moved out of the execute method to allow profiling.
+    47                                           
+    48                                                   Note that no profiling is done if line_profiler is not available or
+    49                                                   if the environment variable `LINE_PROFILE` is not set to "1".
+    50                                                   """
+    51         1       1031.0   1031.0     12.0          obj: Object | None = context.active_object
+    52         1       7584.0   7584.0     88.0          obj.location.x += self.amount  # type: ignore (because of the poll() method that ensures obj is not None)
+```
+
+Note: you cannot profile the execute() method directly, so you would typically factor out expensive code and profile just that.
+
 ## contributing
 
 I am happy to review pull requests with improvements or even complete new add-ons. Just make sure:
