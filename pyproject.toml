@@ -1,5 +1,5 @@
-
-
 # see: https://github.com/microsoft/pylance-release/issues/5457 it is to support Blenders properties
 [tool.pyright]
 reportInvalidTypeForm = false
+
+

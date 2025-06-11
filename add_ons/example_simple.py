@@ -34,6 +34,8 @@ class OBJECT_OT_move_x(bpy.types.Operator):
         obj.location.x += self.amount  # type: ignore (because of the poll() method that ensures obj is not None)
         return {"FINISHED"}
 
+OPERATOR_NAME: str = OBJECT_OT_move_x.__name__
+
 
 def menu_func(self, context):
     self.layout.operator(OBJECT_OT_move_x.bl_idname)

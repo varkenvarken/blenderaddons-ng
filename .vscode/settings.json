@@ -1,0 +1,7 @@
+{
+    "python.testing.pytestArgs": [
+        "tests", "--cov=add_ons", "--cov-report=xml"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}
