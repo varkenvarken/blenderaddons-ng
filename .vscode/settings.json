@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "tests", "--cov=add_ons", "--cov-report=xml"
+        "tests", "--cov=add_ons", "--cov-report=xml", "--benchmark-autosave"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true

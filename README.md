@@ -67,9 +67,14 @@ It also install downloads and compiles the exact Python version that the current
 
 It does *not* install Blender, but installs the `bpy` module from Pypi. This allows us to run the add-ons headless.
 It also install/upgrades the packages mentioned in [requirements.txt](requirements.txt), or, as is the case with `numpy`, *downgrades* it to the version bundled with Blender. Other notable packages it installs are:
-- fake-bpy-module (so that we get nice type checking in vscode)
-- pytest-cov (for creating test coverage reports; pytest itself is installed by vscode when creating the container)
 
+- **fake-bpy-module** so that we get nice type checking in vscode, but see pyproject.toml file because we needed to disable the invalid type form warning. This is because the pylance/pyright people insist that the Blender implementation of properties is wrong, which it isn´t: They seem to forget that annotations are for more than type hinting. See [here for more info](https://github.com/microsoft/pylance-release/issues/5457#issuecomment-1937101627). If you are annoyed by this you can disable typechecking alltogether by adding `typeCheckingMode = "off"` to your pyproject.toml file
+
+- **pytest-cov** for creating test coverage reports; pytest itself is installed by vscode when creating the container
+
+- **pytest-benchmark** for creating benchmarks (See: [benchmarking](#benchmarking))
+
+- **line_profiler** to provide line by line profiling (See: [profiling](#profiling))
 
 ## workflow
 
@@ -120,6 +125,20 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 ```
 
 Note: you cannot profile the execute() method directly, so you would typically factor out expensive code and profile just that.
+
+## benchmarking
+
+Profiling is not the same as benchmarking of course, so support for the [pytest-benchmark package](https://pytest-benchmark.readthedocs.io/en/latest/) was added.
+
+An example benchmark is provided in the file [test_example_simple.py](tests/test_example_simple.py) and all benchmarks are stored in the `.benchmarks` directory.
+
+I have opted  to put them in .gitignore because most of the time you would need to save them.
+
+Comparing two runs is done on the command line:
+
+```bash
+pytest-benchmark compare 0001 0002
+```
 
 ## contributing
 
