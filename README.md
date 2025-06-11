@@ -32,9 +32,11 @@ The name of the repo reflects that this is (sort of) intended as the `next gener
   Both with pytest and coverage in a way we can automate with GitHub actions as well. The configuration that is currently
   implemented works both with vscode test discovery as well as in [the automated test workflow](.github/workflows/test_all.yml) in GitHub actions.
 
-- [ ] suitable for profiling
+- [x] suitable for profiling
 
-  With the line_profiler package
+  With the line_profiler package. See [below](#profiling) for details.
+
+- [ ] move some addons over from the [blenderaddons repo](https://github.com/varkenvarken/blenderaddons)
 
 ## folder structure
 
