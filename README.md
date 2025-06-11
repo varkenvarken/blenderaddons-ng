@@ -132,7 +132,7 @@ Profiling is not the same as benchmarking of course, so support for the [pytest-
 
 An example benchmark is provided in the file [test_example_simple.py](tests/test_example_simple.py) and all benchmarks are stored in the `.benchmarks` directory.
 
-I have opted  to put them in .gitignore because most of the time you would need to save them.
+I have opted to put them in .gitignore because most of the time you wouldn't need to save them.
 
 Comparing two runs is done on the command line:
 
