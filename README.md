@@ -1,3 +1,5 @@
+[![Test Status](https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml/badge.svg)](https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml)
+
 # blenderaddons-ng
 
 A Visual Studio Code project to develop, test and profile Blender add-ons
