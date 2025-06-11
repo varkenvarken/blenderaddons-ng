@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Python application
+name: Test
 
 on:
   push:
@@ -31,3 +31,22 @@ jobs:
     - name: Test with pytest
       run: |
         pytest tests --cov=add_ons --cov-report=xml
+    - name: Extract coverage percentage
+      id: coverage
+      run: |
+        COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); print(round(float(root.get('line-rate'))*100, 2))")
+        echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+    
+    - name: Download coverage badge
+      run: |
+        curl -o coverage.svg "https://img.shields.io/badge/Coverage-${{ steps.coverage.outputs.coverage }}%25-brightgreen"
+    
+    - name: Commit coverage badge
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add coverage.svg
+        git commit -m "Update coverage badge [skip ci]" || echo "No changes to commit"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
