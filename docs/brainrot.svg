@@ -1,13 +1,44 @@
-<svg width="256" height="224" viewBox="0 0 256 224" xmlns="http://www.w3.org/2000/svg">
-  <!-- Triangular sign with red border -->
-  <polygon points="128,12 244,212 12,212" fill="white" stroke="red" stroke-width="14"/>
-  <!-- Pink brain (simplified shape) -->
-  <ellipse cx="128" cy="120" rx="52" ry="36" fill="pink" stroke="hotpink" stroke-width="3"/>
-  <!-- Brain details (gyri) -->
-  <path d="M108 110 Q112 100 128 104 Q144 108 148 118" stroke="#e75480" stroke-width="2" fill="none"/>
-  <path d="M115 130 Q120 140 128 135 Q136 130 142 138" stroke="#e75480" stroke-width="2" fill="none"/>
-  <path d="M128 104 Q135 92 150 112" stroke="#e75480" stroke-width="2" fill="none"/>
-  <!-- Black worm inside the brain -->
-  <path d="M120 120 Q124 126 128 120 Q132 114 138 124" stroke="black" stroke-width="6" fill="none" stroke-linecap="round"/>
-  <ellipse cx="138" cy="124" rx="4" ry="3" fill="black"/>
+<svg width="300" height="180" viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="brainGradient" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#ffe0f0"/>
+      <stop offset="100%" stop-color="#d993b4"/>
+    </radialGradient>
+    <radialGradient id="wormGradient" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#fbe8f7"/>
+      <stop offset="100%" stop-color="#b95fa0"/>
+    </radialGradient>
+  </defs>
+  <!-- Brain outline -->
+  <ellipse cx="130" cy="90" rx="62" ry="47" fill="url(#brainGradient)" stroke="#a25a7c" stroke-width="3"/>
+  <!-- Brain gyri and sulci -->
+  <path d="M85,85 Q100,60 120,85 Q140,110 160,85 Q180,60 195,85" fill="none" stroke="#a25a7c" stroke-width="2"/>
+  <path d="M90,100 Q110,120 130,100 Q150,80 170,100 Q189,120 200,100" fill="none" stroke="#a25a7c" stroke-width="2"/>
+  <path d="M100,70 Q125,95 150,70 Q175,45 185,70" fill="none" stroke="#a25a7c" stroke-width="1.5"/>
+  <path d="M120,125 Q130,140 140,125 Q150,110 155,125 Q160,140 170,125" fill="none" stroke="#a25a7c" stroke-width="1.5"/>
+  <!-- Worm body -->
+  <path id="wormbody"
+        d="M200,120 
+           Q220,135 210,150 
+           Q200,165 185,150 
+           Q170,135 190,130 
+           Q210,125 200,120"
+        fill="url(#wormGradient)" stroke="#8f4572" stroke-width="3"/>
+  <!-- Worm segments -->
+  <ellipse cx="202" cy="126" rx="7" ry="8" fill="none" stroke="#8f4572" stroke-width="1.5"/>
+  <ellipse cx="208" cy="136" rx="7" ry="8" fill="none" stroke="#8f4572" stroke-width="1.5"/>
+  <ellipse cx="204" cy="146" rx="8" ry="7" fill="none" stroke="#8f4572" stroke-width="1.5"/>
+  <ellipse cx="192" cy="142" rx="7" ry="8" fill="none" stroke="#8f4572" stroke-width="1.5"/>
+  <ellipse cx="188" cy="134" rx="7" ry="8" fill="none" stroke="#8f4572" stroke-width="1.5"/>
+  <!-- Worm face -->
+  <ellipse cx="200" cy="120" rx="10" ry="9" fill="url(#wormGradient)" stroke="#8f4572" stroke-width="2"/>
+  <circle cx="196" cy="122" r="2" fill="#3a2333"/>
+  <circle cx="204" cy="122" r="2" fill="#3a2333"/>
+  <path d="M198,128 Q200,131 202,128" stroke="#3a2333" stroke-width="1.2" fill="none"/>
+  <!-- Worm highlights -->
+  <ellipse cx="206" cy="118" rx="2" ry="1.2" fill="#fff" opacity="0.5"/>
+  <!-- Tiny bristles (setae) -->
+  <line x1="190" y1="135" x2="187" y2="132" stroke="#a25a7c" stroke-width="1"/>
+  <line x1="194" y1="140" x2="191" y2="144" stroke="#a25a7c" stroke-width="1"/>
+  <line x1="208" y1="136" x2="211" y2="139" stroke="#a25a7c" stroke-width="1"/>
 </svg>
