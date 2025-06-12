@@ -41,7 +41,7 @@ The name of the repo reflects that this is (sort of) intended as the `next gener
 
 - [ ] move some addons over from the [blenderaddons repo](https://github.com/varkenvarken/blenderaddons)
 
-  - first one up: `select_colinear_edges.py`
+  - first one done: [select_colinear_edges.py](add_ons/select_colinear_edges.py)   (but tests are not complete yet)
 
 ## folder structure
 
@@ -129,7 +129,11 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     52         1       7584.0   7584.0     88.0          obj.location.x += self.amount  # type: ignore (because of the poll() method that ensures obj is not None)
 ```
 
-Note: you cannot profile the execute() method directly, so you would typically factor out expensive code and profile just that.
+Note: you cannot profile the `execute()` method directly, so you would typically factor out expensive code and profile just that. If you don´t, i.e. apply the `@profile` decorator directly to the `execute()` method, the `register_class()` function will complain:
+
+```
+ValueError: expected Operator, MESH_OT_select_colinear_edges class "execute" function to have 2 args, found 0
+```
 
 ## benchmarking
 
@@ -138,6 +142,8 @@ Profiling is not the same as benchmarking of course, so support for the [pytest-
 An example benchmark is provided in the file [test_example_simple.py](tests/test_example_simple.py) and all benchmarks are stored in the `.benchmarks` directory.
 
 I have opted to put them in .gitignore because most of the time you wouldn't need to save them.
+
+Benchmarks are *excluded* from the normal runs and are also not part of the [automated workflow](.github/workflows/test_all.yml) because sometimes the cause Vscode to hang. So a Vscode task `Run benchmarks` is configured that will *only* run all benchmarks.
 
 Comparing two runs is done on the command line:
 

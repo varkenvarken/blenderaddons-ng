@@ -30,7 +30,7 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with pytest
       run: |
-        pytest tests --cov=add_ons --cov-report=xml
+        pytest tests --cov=add_ons --cov-report=xml --benchmark-skip
     - name: Extract coverage percentage
       id: coverage
       run: |
