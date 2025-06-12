@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>blenderaddons-ng</title>
@@ -15,69 +16,104 @@
             padding: 0;
             color: #1a1a1a;
         }
+
         header {
-            background: #23272e;
-            color: #fff;
+            background: #fff;
+            color: #2a4d69;
             padding: 2rem 1rem 1rem 1rem;
             text-align: center;
         }
-        h1, h2 {
+
+        header a {
+            color: #2a4d69;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        header a:visited {
+            color: #2a4d69;
+            text-decoration: none;
+        }
+
+        #logo {
+            max-width: 300px;
+            margin-bottom: 1rem;
+            float: left;
+            margin-top: -20px;
+        }
+
+        h1,
+        h2 {
             font-family: 'Amaranth', Arial, sans-serif;
         }
+
         h1 {
             margin-top: 0;
             font-size: 2.4rem;
         }
+
         h2 {
             color: #2a4d69;
         }
+
         .container {
             max-width: 900px;
             margin: 2rem auto 0 auto;
             background: #fff;
             border-radius: 8px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
             padding: 2rem;
         }
+
         ul {
             margin: 1rem 0 1rem 2rem;
         }
-        pre, code {
+
+        pre,
+        code {
             background: #f3f3f3;
             border-radius: 4px;
             padding: 0.2em 0.4em;
             font-size: 1em;
         }
+
         pre {
             padding: 1em;
             overflow-x: auto;
         }
+
         footer {
             text-align: center;
             padding: 2rem 1rem 1rem 1rem;
             color: #888;
             font-size: 1rem;
         }
+
         @media (max-width: 600px) {
             .container {
                 padding: 1rem;
             }
+
             h1 {
                 font-size: 1.5rem;
             }
         }
+
         .github-link {
             color: #4183c4;
             text-decoration: none;
             font-weight: bold;
             transition: color 0.2s;
         }
+
         .github-link:hover {
             color: #23527c;
         }
+
         .badge-list {
             margin-bottom: 1.5rem;
         }
+
         .badge-list img {
             vertical-align: middle;
             height: 24px;
@@ -85,41 +121,58 @@
         }
     </style>
 </head>
+
 <body>
-    <header>
+    <header class="container">
+        <img src="Blenderaddons ng logo.png" id="logo" alt="blenderaddons-ng logo">
         <h1><a href="https://github.com/varkenvarken/blenderaddons-ng">blenderaddons-ng</a></h1>
         <p>A Visual Studio Code project to develop, test, and profile Blender add-ons</p>
         <div class="badge-list">
-            <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/blender-version.svg" alt="Blender Version badge"/>
-            <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/python.svg" alt="Python Version badge"/>
+            <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/blender-version.svg"
+                alt="Blender Version badge" />
+            <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/python.svg"
+                alt="Python Version badge" />
             <a href="https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml">
-                <img src="https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml/badge.svg" alt="Test Status"/>
+                <img src="https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml/badge.svg"
+                    alt="Test Status" />
             </a>
-            <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/coverage.svg" alt="Test coverage badge"/>
+            <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/coverage.svg"
+                alt="Test coverage badge" />
         </div>
     </header>
     <div class="container">
 
         <h2>Background</h2>
         <p>
-            <strong>blenderaddons-ng</strong> focuses on modern, automated testing of Blender add-ons, with an emphasis on creating and running unit tests for core add-on functionality, rather than just interactive testing. The repository provides a clean, reproducible development environment for building, testing, profiling, and benchmarking Blender add-ons.
+            <strong>blenderaddons-ng</strong> focuses on modern, automated testing of Blender add-ons, with an emphasis
+            on creating and running unit tests for core add-on functionality, rather than just interactive testing. The
+            repository provides a clean, reproducible development environment for building, testing, profiling, and
+            benchmarking Blender add-ons.
         </p>
         <p>
-            This project is the <strong>next generation</strong> of the <a class="github-link" href="https://github.com/varkenvarken/blenderaddons">blenderaddons</a> repo, designed for better structure, automation, and developer experience.
+            This project is the <strong>next generation</strong> of the <a class="github-link"
+                href="https://github.com/varkenvarken/blenderaddons">blenderaddons</a> repo, designed for better
+            structure, automation, and developer experience.
         </p>
 
         <h2>Project Goals</h2>
         <ul>
-            <li>Provide a Visual Studio Code project and repository structure for developing multiple Blender add-ons.</li>
+            <li>Provide a Visual Studio Code project and repository structure for developing multiple Blender add-ons.
+            </li>
             <li>Enable easy development in DevContainers, allowing for flexible Blender and Python versions.</li>
-            <li>Support automated testing using <code>pytest</code> and <code>pytest-cov</code>, integrated with GitHub Actions.</li>
-            <li>Facilitate profiling and benchmarking of add-ons using <code>line_profiler</code> and <code>pytest-benchmark</code>.</li>
-            <li>Gradually migrate and modernize add-ons from the <a class="github-link" href="https://github.com/varkenvarken/blenderaddons">blenderaddons</a> repository.</li>
+            <li>Support automated testing using <code>pytest</code> and <code>pytest-cov</code>, integrated with GitHub
+                Actions.</li>
+            <li>Facilitate profiling and benchmarking of add-ons using <code>line_profiler</code> and
+                <code>pytest-benchmark</code>.
+            </li>
+            <li>Gradually migrate and modernize add-ons from the <a class="github-link"
+                    href="https://github.com/varkenvarken/blenderaddons">blenderaddons</a> repository.</li>
         </ul>
 
         <h2>Folder Structure</h2>
         <ul>
-            <li><b>/add-ons</b> — all add-on code lives here; each add-on package has its own subfolder if it includes an <code>__init__.py</code>.</li>
+            <li><b>/add-ons</b> — all add-on code lives here; each add-on package has its own subfolder if it includes
+                an <code>__init__.py</code>.</li>
             <li><b>/tests</b> — contains <code>pytest</code>-discoverable tests, prefixed with <code>test_</code>.</li>
             <li><b>/packages</b> — (planned) to store zipped add-on packages.</li>
         </ul>
@@ -129,7 +182,8 @@
 cd ./blenderaddons-ng
 </code></pre>
         <p>
-            Open the folder in VS Code. If prompted, rebuild the DevContainer, or select "Rebuild Container" from the command palette to begin developing.
+            Open the folder in VS Code. If prompted, rebuild the DevContainer, or select "Rebuild Container" from the
+            command palette to begin developing.
         </p>
 
         <h2>Requirements</h2>
@@ -143,19 +197,26 @@ cd ./blenderaddons-ng
             <li><code>line_profiler</code> for profiling</li>
         </ul>
         <p>
-            See <a class="github-link" href="https://github.com/varkenvarken/blenderaddons-ng/blob/main/requirements.txt">requirements.txt</a> and the <a class="github-link" href="https://github.com/varkenvarken/blenderaddons-ng/blob/main/Dockerfile">Dockerfile</a> for details.
+            See <a class="github-link"
+                href="https://github.com/varkenvarken/blenderaddons-ng/blob/main/requirements.txt">requirements.txt</a>
+            and the <a class="github-link"
+                href="https://github.com/varkenvarken/blenderaddons-ng/blob/main/Dockerfile">Dockerfile</a> for details.
         </p>
 
         <h2>Development Workflow</h2>
         <ol>
-            <li>Copy <code>add_ons/example_simple.py</code> to <code>add_ons/&lt;new_name&gt;.py</code> as a starting point.</li>
-            <li>Modify the code, update the <code>bl_info</code> dictionary and <code>OPERATOR_NAME</code> variable.</li>
-            <li>Copy <code>tests/test_example_simple.py</code> to <code>tests/test_&lt;new_name&gt;.py</code> and write thorough tests.</li>
+            <li>Copy <code>add_ons/example_simple.py</code> to <code>add_ons/&lt;new_name&gt;.py</code> as a starting
+                point.</li>
+            <li>Modify the code, update the <code>bl_info</code> dictionary and <code>OPERATOR_NAME</code> variable.
+            </li>
+            <li>Copy <code>tests/test_example_simple.py</code> to <code>tests/test_&lt;new_name&gt;.py</code> and write
+                thorough tests.</li>
         </ol>
 
         <h2>Profiling</h2>
         <p>
-            Use <a href="https://pypi.org/project/line-profiler/" class="github-link">line_profiler</a> to profile operators. Example:
+            Use <a href="https://pypi.org/project/line-profiler/" class="github-link">line_profiler</a> to profile
+            operators. Example:
         </p>
         <pre><code>LINE_PROFILE=1 python3 add_ons/example_simple.py
 </code></pre>
@@ -165,12 +226,14 @@ cd ./blenderaddons-ng
 
         <h2>Benchmarking</h2>
         <p>
-            Use <a href="https://pytest-benchmark.readthedocs.io/en/latest/" class="github-link">pytest-benchmark</a> to measure performance. Example:
+            Use <a href="https://pytest-benchmark.readthedocs.io/en/latest/" class="github-link">pytest-benchmark</a> to
+            measure performance. Example:
         </p>
         <pre><code>pytest-benchmark compare 0001 0002
 </code></pre>
         <p>
-            Example benchmarks are in <code>tests/test_example_simple.py</code>. Results are stored in <code>.benchmarks</code> (gitignored).
+            Example benchmarks are in <code>tests/test_example_simple.py</code>. Results are stored in
+            <code>.benchmarks</code> (gitignored).
         </p>
 
         <h2>Contributing</h2>
@@ -183,16 +246,21 @@ cd ./blenderaddons-ng
             <li>Include comprehensive tests</li>
         </ul>
         <p>
-            See the <a class="github-link" href="https://github.com/varkenvarken/blenderaddons-ng">GitHub repository</a> for more details and to get involved.
+            See the <a class="github-link" href="https://github.com/varkenvarken/blenderaddons-ng">GitHub repository</a>
+            for more details and to get involved.
         </p>
 
         <h2>License</h2>
         <p>
-            This project is open source and available under the <a class="github-link" href="https://github.com/varkenvarken/blenderaddons-ng/blob/main/LICENSE" target="_blank" rel="noopener">GPL v3 or later</a>.
+            This project is open source and available under the <a class="github-link"
+                href="https://github.com/varkenvarken/blenderaddons-ng/blob/main/LICENSE" target="_blank"
+                rel="noopener">GPL v3 or later</a>.
         </p>
     </div>
     <footer>
-        &copy; 2025 <a class="github-link" href="https://github.com/varkenvarken" target="_blank" rel="noopener">varkenvarken</a> &mdash; blenderaddons-ng
+        &copy; 2025 <a class="github-link" href="https://github.com/varkenvarken" target="_blank"
+            rel="noopener">varkenvarken</a> &mdash; blenderaddons-ng
     </footer>
 </body>
+
 </html>
