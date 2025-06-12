@@ -26,6 +26,7 @@ from os import environ
 import bpy
 import bmesh
 from mathutils import Vector
+from math import radians
 
 
 class MESH_OT_select_colinear_edges(bpy.types.Operator):
@@ -38,9 +39,11 @@ class MESH_OT_select_colinear_edges(bpy.types.Operator):
     angle_threshold: bpy.props.FloatProperty(
         name="Angle Threshold",
         description="Maximum angle (degrees) to consider edges colinear",
-        default=1.0,
+        default=radians(1),
         min=0.0,
-        max=10.0,
+        max=radians(90),
+        soft_max=radians(10),
+        subtype="ANGLE",
     )
 
     only_colinear_paths: bpy.props.BoolProperty(
@@ -73,7 +76,7 @@ class MESH_OT_select_colinear_edges(bpy.types.Operator):
         for e in bm.edges:
             e.select = False
 
-        threshold_rad = self.angle_threshold * 3.14159265 / 180.0
+        threshold_rad = self.angle_threshold
 
         @profile
         def edge_dir(edge):
@@ -153,7 +156,7 @@ def unregister():
 import bmesh
 
 
-def subdivide_all_faces(mesh_obj:bpy.types.Mesh, cuts=1) -> None:
+def subdivide_all_faces(mesh_obj: bpy.types.Mesh, cuts=1) -> None:
     """
     Subdivide all faces of the given mesh object.
 
@@ -175,7 +178,7 @@ def subdivide_all_faces(mesh_obj:bpy.types.Mesh, cuts=1) -> None:
     bm.free()  # free and prevent further access
 
 
-def select_single_edge(mesh_obj:bpy.types.Mesh, edge_index=0) -> None:
+def select_single_edge(mesh_obj: bpy.types.Mesh, edge_index=0) -> None:
     """
     Select a single edge in the given mesh object by index.
     Assumes the object is in edit mode.
@@ -199,7 +202,7 @@ def select_single_edge(mesh_obj:bpy.types.Mesh, edge_index=0) -> None:
     bmesh.update_edit_mesh(mesh_obj)
 
 
-def count_selected_edges(mesh_obj:bpy.types.Mesh) -> int:
+def count_selected_edges(mesh_obj: bpy.types.Mesh) -> int:
     """
     Return the number of selected edges in the given mesh object.
     Assumes the object is in edit mode.
@@ -228,7 +231,7 @@ def number_of_edges_in_a_subdivided_cube(cuts: int = 1) -> int:
     return 6 * 2 * (cuts * (cuts + 1)) + 12 * (cuts + 1)
 
 
-def number_of_edges_in_mesh(mesh_obj:bpy.types.Mesh) -> int:
+def number_of_edges_in_mesh(mesh_obj: bpy.types.Mesh) -> int:
     """
     Return the number of edges in the given mesh object.
 
@@ -236,7 +239,6 @@ def number_of_edges_in_mesh(mesh_obj:bpy.types.Mesh) -> int:
     :return: Number of edges (int)
     """
     return len(mesh_obj.edges)
-
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -268,7 +270,7 @@ if __name__ == "__main__":  # pragma: no cover
     n_selected_edges = count_selected_edges(obj)
     assert n_selected_edges == n_cuts + 1
 
-    assert n_edges == number_of_edges_in_a_subdivided_cube(n_cuts )
+    assert n_edges == number_of_edges_in_a_subdivided_cube(n_cuts)
 
     unregister()
 
