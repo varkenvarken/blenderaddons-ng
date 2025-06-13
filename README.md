@@ -161,6 +161,7 @@ I am happy to review pull requests with improvements or even complete new add-on
 - and comes with extensive test coverage
 
 ## what about AI?
+<img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/refs/heads/main/docs/brainrot.svg" alt="Brainrot warning" width="150">
 
 I have mixed feelings about AI. On the one hand it can save time if you quickly want to cobble up some code, but on the other hand, if you don't have experience writing the code yourself it is difficult to create good prompt or review the generated code. Also, LLMs are quick in creating a unit test for a function, but in test driven development that is the wrong way around! And unit test are not just about code that works, it also should test functionality and exceptions or edge cases. But since it cannot guess the functional requirements (or 'intentions') it tends to generate poor tests.
 
