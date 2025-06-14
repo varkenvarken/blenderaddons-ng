@@ -86,11 +86,13 @@ class MESH_OT_select_colinear_edges(bpy.types.Operator):
         @profile
         def are_colinear(e1, e2):
             # Check if direction vectors are parallel
-            dir1 = edge_dir(e1)
+            v1, v2 = e1.verts
+            dir1 = (v2.co - v1.co).normalized()
             # guard against zero length edges
             if dir1.length < 1e-6:
                 return False
-            dir2 = edge_dir(e2)
+            v1, v2 = e2.verts
+            dir2 = (v2.co - v1.co).normalized()
             if dir2.length < 1e-6:
                 return False
             angle = dir1.angle(dir2)
@@ -261,7 +263,9 @@ if __name__ == "__main__":  # pragma: no cover
     select_single_edge(obj.data, edge_index=0)
 
     # selecting parallel edges is heaview than selecting colinear paths and that is what we use here for profiling
-    result = bpy.ops.mesh.select_colinear_edges("INVOKE_DEFAULT", only_colinear_paths=False, angle_threshold=radians(0.1))
+    result = bpy.ops.mesh.select_colinear_edges(
+        "INVOKE_DEFAULT", only_colinear_paths=False, angle_threshold=radians(0.1)
+    )
 
     n_edges = number_of_edges_in_mesh(obj.data)
 
