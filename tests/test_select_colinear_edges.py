@@ -15,6 +15,7 @@ from add_ons.select_colinear_edges import (
 
 from math import radians
 
+
 class TestSelectColinearEdges:
     @classmethod
     def setup_class(cls):
@@ -51,7 +52,7 @@ class TestSelectColinearEdges:
 
         # next call is needed because we need to return the enviroment to a state similar to where we started
         # bacuse other tests might depend on it
-        
+
         bpy.ops.object.mode_set(mode="OBJECT")
 
     def test_select_colinear_edges_2_operator(self, monkeypatch):
@@ -80,6 +81,13 @@ class TestSelectColinearEdges:
         assert n_selected_edges == n_cuts + 1
         bpy.ops.object.mode_set(mode="OBJECT")
 
+    def helper(self, obj):
+        result = bpy.ops.mesh.select_colinear_edges(
+            "INVOKE_DEFAULT", only_colinear_paths=False, angle_threshold=radians(0.1)
+        )
+        select_single_edge(obj.data, edge_index=0)
+        return result
+
     def test_select_colinear_edges_benchmark(self, benchmark):
         # prepare a sample mesh, a cube with subdivided faces
         n_cuts = 100
@@ -89,14 +97,12 @@ class TestSelectColinearEdges:
         bpy.ops.object.mode_set(mode="EDIT")
         select_single_edge(obj.data, edge_index=0)
 
-        # Call the operator. This will in fact call the operator a number of times
-        # but once all edges are selected, this will stay constant.
-        result = benchmark(bpy.ops.mesh.select_colinear_edges, "INVOKE_DEFAULT")
+        # the helper will be called multiple times by the benchmark
+        # the help will call the operator and then reset the selection
+        # this means deselecting all but one edge is incorparted in the benchmark but that's what it is
+        result = benchmark(self.helper, obj)
 
         # Check result and new location
         assert result == {"FINISHED"}
 
-        n_selected_edges = count_selected_edges(obj)
-        assert n_selected_edges == n_cuts + 1
         bpy.ops.object.mode_set(mode="OBJECT")
-

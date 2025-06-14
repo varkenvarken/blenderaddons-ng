@@ -260,17 +260,13 @@ if __name__ == "__main__":  # pragma: no cover
     bpy.ops.object.mode_set(mode="EDIT")
     select_single_edge(obj.data, edge_index=0)
 
-    result = bpy.ops.mesh.select_colinear_edges("INVOKE_DEFAULT")
+    # selecting parallel edges is heaview than selecting colinear paths and that is what we use here for profiling
+    result = bpy.ops.mesh.select_colinear_edges("INVOKE_DEFAULT", only_colinear_paths=False, angle_threshold=radians(0.1))
 
     n_edges = number_of_edges_in_mesh(obj.data)
 
     # this is not a unit test, but at least we know that the operator works
     assert result == {"FINISHED"}
-
-    n_selected_edges = count_selected_edges(obj)
-    assert n_selected_edges == n_cuts + 1
-
-    assert n_edges == number_of_edges_in_a_subdivided_cube(n_cuts)
 
     unregister()
 
