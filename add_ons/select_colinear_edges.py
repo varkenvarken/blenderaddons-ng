@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Select Colinear Edges",
     "author": "michel.anders, GitHub Copilot",
-    "version": (1, 1, 20250614103858),
+    "version": (1, 1, 20250614104810),
     "blender": (4, 4, 0),
     "location": "View3D > Select > Select Similar > Colinear Edges",
     "description": "Select all edges colinear with any currently selected edge, optionally only along colinear paths",
@@ -95,9 +95,9 @@ class MESH_OT_select_colinear_edges(bpy.types.Operator):
             dir2 = (v2.co - v1.co)  # .normalized()
             # if dir2.length < 1e-6:
             #     return False
-            angle = dir1.angle(dir2)
-            if angle is None:
-                return False
+            angle = dir1.angle(dir2, 10)
+            # if angle is None:
+            #     return False
             if not (angle < threshold_rad or abs(angle - 3.14159265) < threshold_rad):
                 return False
             # Check if the vector between their start points is also parallel to the direction
