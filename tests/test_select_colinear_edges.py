@@ -1,4 +1,5 @@
 from sys import path
+from bpy.types import Object
 import pytest
 
 pytest.importorskip("bpy")
@@ -11,9 +12,61 @@ from add_ons.select_colinear_edges import (
     number_of_edges_in_mesh,
     count_selected_edges,
     number_of_edges_in_a_subdivided_cube,
+    colinear_edges,
+    select_colinear,
 )
 
 from math import radians
+import numpy as np
+
+
+class TestCoreFunctions:
+    def test_colinear_edges(self):
+        coords = np.array(
+            [
+                [0, 0, 0],
+                [1, 1, 1],
+                [2, 2, 2],
+                [3, 0, 0],
+                [4, 4, 4],
+                [5, 5, 5],
+            ]
+        )
+        edges = np.array([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]])
+        angle_threshold = radians(0.1)  # 0.1 degrees
+        selected = np.array([True, False, False, False, False])
+        result = colinear_edges(selected, edges, coords, angle_threshold)
+        expected = np.array([True, True, False, False, True])
+        assert np.array_equal(result, expected)
+
+    def test_select_colinear(self):
+        # prepare a sample mesh, a cube with subdivided faces
+        n_cuts = 100
+        bpy.ops.mesh.primitive_cube_add()
+        obj: Object = bpy.context.active_object
+        subdivide_all_faces(obj.data, cuts=n_cuts)
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_mode(type="EDGE")  # we must be in edge select mode
+        select_single_edge(obj.data, edge_index=0)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.ops.object.mode_set(mode="EDIT")
+        assert 1 == count_selected_edges(obj)
+        
+        # we also need to set the angle threshold to guarantee we only select edges colinear to the first edge
+        # without the requirment to form a colinear path, we might select parallel edges as well
+        # in a unit cube subdivided 100 times, the smallest angle between parallel edges is
+        # sin(θ) = 0.01/1 ➞ θ = arcsin(0.01) ≈ 0.6 degrees
+        # so we set the angle threshold to 0.1 degrees to get the same result as in the first test
+        count = select_colinear(
+            obj.data.edges, obj.data.vertices, threshold=radians(0.1)
+        )
+
+        # bpy.ops.object.mode_set(mode="EDIT")
+        n_selected_edges = count_selected_edges(obj)
+        # bpy.ops.object.mode_set(mode="OBJECT")
+
+        assert count == n_cuts + 1
+        bpy.ops.object.mode_set(mode="OBJECT")
 
 
 class TestSelectColinearEdges:
@@ -40,6 +93,7 @@ class TestSelectColinearEdges:
         # make sure to match this call with one that switches back to OBJECT mode
 
         bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_mode(type="EDGE")  # we must be in edge select mode
         select_single_edge(obj.data, edge_index=0)
 
         result = bpy.ops.mesh.select_colinear_edges("INVOKE_DEFAULT")
@@ -64,6 +118,7 @@ class TestSelectColinearEdges:
         obj = bpy.context.active_object
         subdivide_all_faces(obj.data, cuts=n_cuts)
         bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_mode(type="EDGE")  # we must be in edge select mode
         select_single_edge(obj.data, edge_index=0)
 
         # we also need to set the angle threshold to gurantee we only select edges colinear to the first edge
@@ -95,6 +150,7 @@ class TestSelectColinearEdges:
         obj = bpy.context.active_object
         subdivide_all_faces(obj.data, cuts=n_cuts)
         bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_mode(type="EDGE")  # we must be in edge select mode
         select_single_edge(obj.data, edge_index=0)
 
         # the helper will be called multiple times by the benchmark

@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Select Colinear Edges",
     "author": "michel.anders, GitHub Copilot",
-    "version": (1, 1, 20250614104810),
+    "version": (1, 1, 20250615085624),
     "blender": (4, 4, 0),
     "location": "View3D > Select > Select Similar > Colinear Edges",
     "description": "Select all edges colinear with any currently selected edge, optionally only along colinear paths",
@@ -27,6 +27,61 @@ import bpy
 import bmesh
 from mathutils import Vector
 from math import radians
+
+import numpy as np
+
+@profile
+def select_colinear(edges, vertices, threshold):
+    n_edges = len(edges)
+    n_vertices = len(vertices)
+    indices = np.empty(2 * n_edges, dtype=int)
+    coords = np.empty(3 * n_vertices, dtype=float)
+    selected = np.zeros(n_edges, dtype=bool)
+    edges.foreach_get("vertices", indices)
+    edges.foreach_get("select", selected)
+    vertices.foreach_get("co", coords)
+    coords = coords.reshape((n_vertices, 3))
+    indices = indices.reshape((n_edges, 2))
+
+    colinear = colinear_edges(selected, indices, coords, threshold)
+    edges.foreach_set("select", colinear)
+    return np.count_nonzero(colinear)
+
+@profile
+def colinear_edges(selected: np.ndarray, indices, coords, threshold):
+    colinear = np.zeros_like(selected)
+
+    # calculate direction vectors for each edge
+    edge_dirs = coords[indices[:, 1]] - coords[indices[:, 0]]
+    edge_dirs = edge_dirs / np.linalg.norm(edge_dirs, axis=1)[:, np.newaxis]
+
+    for e in selected.nonzero()[0]:
+        # get the direction vector of the selected edge
+        dir1 = edge_dirs[e]
+        # check all other edges for colinearity
+        angles = np.arccos(np.clip(np.dot(dir1, edge_dirs.T), -1.0, 1.0))
+        parallel = (angles < threshold) | (np.abs(angles - np.pi) < threshold)
+        v1 = coords[indices[e, 0]]
+        w1 = coords[indices[:, 0]]
+        # vector between start points
+        between = w1 - v1
+        # if the vector between start points is zero, they share a vertex, so colinear
+        between_length = np.linalg.norm(between, axis=1)
+        connected = between_length < 1e-6
+        angles_between = np.abs(
+            np.arccos(
+                np.clip(
+                    np.dot(dir1, (between / between_length[:, np.newaxis]).T), -1.0, 1.0
+                )
+            )
+        )
+        bparallel = (angles_between < threshold) | (
+            np.abs(angles_between - np.pi) < threshold
+        )
+        # colinear if they are parallel and either share a vertex or the angle between the direction vector and the vector between start points is less than the threshold
+        colinear |= (connected | bparallel) & parallel
+
+    return colinear
 
 
 class MESH_OT_select_colinear_edges(bpy.types.Operator):
@@ -63,18 +118,6 @@ class MESH_OT_select_colinear_edges(bpy.types.Operator):
     @profile
     def do_execute(self, context: bpy.types.Context) -> set[str]:
         obj = context.active_object
-        bm = bmesh.from_edit_mesh(obj.data)
-        bm.edges.ensure_lookup_table()
-
-        # Find all originally selected edges
-        original_selected_edges = [e for e in bm.edges if e.select]
-        if not original_selected_edges:
-            self.report({"WARNING"}, "No edges selected")
-            return {"CANCELLED"}
-
-        # Deselect all edges first
-        for e in bm.edges:
-            e.select = False
 
         threshold_rad = self.angle_threshold
 
@@ -87,12 +130,12 @@ class MESH_OT_select_colinear_edges(bpy.types.Operator):
         def are_colinear(e1, e2):
             # Check if direction vectors are parallel
             v1, v2 = e1.verts
-            dir1 = (v2.co - v1.co)  # .normalized()
+            dir1 = v2.co - v1.co  # .normalized()
             # guard against zero length edges
             # if dir1.length < 1e-6:
             #     return False
             v1, v2 = e2.verts
-            dir2 = (v2.co - v1.co)  # .normalized()
+            dir2 = v2.co - v1.co  # .normalized()
             # if dir2.length < 1e-6:
             #     return False
             angle = dir1.angle(dir2, 10)
@@ -112,6 +155,19 @@ class MESH_OT_select_colinear_edges(bpy.types.Operator):
             return angle2 < threshold_rad or abs(angle2 - 3.14159265) < threshold_rad
 
         if self.only_colinear_paths:
+            bm = bmesh.from_edit_mesh(obj.data)
+            bm.edges.ensure_lookup_table()
+
+            # Find all originally selected edges
+            original_selected_edges = [e for e in bm.edges if e.select]
+            if not original_selected_edges:
+                self.report({"WARNING"}, "No edges selected")
+                return {"CANCELLED"}
+
+            # Deselect all edges first
+            for e in bm.edges:
+                e.select = False
+
             visited = set()
             queue = []
             for e in original_selected_edges:
@@ -128,14 +184,17 @@ class MESH_OT_select_colinear_edges(bpy.types.Operator):
                         if are_colinear(current_edge, neighbor):
                             queue.append(neighbor)
                             visited.add(neighbor)
+            bmesh.update_edit_mesh(obj.data)
         else:
-            for e in bm.edges:
-                for sel_edge in original_selected_edges:
-                    if are_colinear(sel_edge, e):
-                        e.select = True
-                        break
-
-        bmesh.update_edit_mesh(obj.data)
+            # for e in bm.edges:
+            #     for sel_edge in original_selected_edges:
+            #         if are_colinear(sel_edge, e):
+            #             e.select = True
+            #             break
+            # bmesh.update_edit_mesh(obj.data)
+            bpy.ops.object.mode_set(mode="OBJECT")
+            select_colinear(obj.data.edges, obj.data.vertices, self.angle_threshold)
+            bpy.ops.object.mode_set(mode="EDIT")
         return {"FINISHED"}
 
 
@@ -203,6 +262,8 @@ def select_single_edge(mesh_obj: bpy.types.Mesh, edge_index=0) -> None:
     if 0 <= edge_index < len(bm.edges):
         bm.edges[edge_index].select = True
 
+    bm.select_flush_mode()
+
     bmesh.update_edit_mesh(mesh_obj)
 
 
@@ -257,7 +318,7 @@ if __name__ == "__main__":  # pragma: no cover
     register()
 
     # prepare a sample mesh, a cube with subdivided faces
-    n_cuts = 100
+    n_cuts = 500
     bpy.ops.mesh.primitive_cube_add()
     obj = bpy.context.active_object
     subdivide_all_faces(obj.data, cuts=n_cuts)

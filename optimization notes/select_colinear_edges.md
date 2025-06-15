@@ -1,8 +1,16 @@
 # test_select_colinear_edges_benchmark
 
+Selecting colinear edges has two modes: one only allowing colinear paths, where all selected edges must be connected to the originally selected ons, and one where all colinear edges are selected, even if there are gaps in between.
+
+The first one performs in roughly linear time with the number of originally selected edges, because it only looks at connected edges. The second mode however has to test *all* edges in the mesh for colinearity which for large meshes can take a very long time!
+
 ## benchmark (baseline)
 
+A basic cube subdivided 100 times actually takes almost 100ms. If we look at the benchmark, we get this result:
+
 Runs in 92 ms (11 Ops/s)
+
+So it is time to profile and see if we can improve that.
 
 ## line profile
 
@@ -60,68 +68,9 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     63                                               @profile
     64                                               def do_execute(self, context: bpy.types.Context) -> set[str]:
-    65         1          1.2      1.2      0.0          obj = context.active_object
-    66         1          5.8      5.8      0.0          bm = bmesh.from_edit_mesh(obj.data)
-    67         1          1.1      1.1      0.0          bm.edges.ensure_lookup_table()
-    68                                           
-    69                                                   # Find all originally selected edges
-    70         1       9866.5   9866.5      1.3          original_selected_edges = [e for e in bm.edges if e.select]
-    71         1          0.5      0.5      0.0          if not original_selected_edges:
-    72                                                       self.report({"WARNING"}, "No edges selected")
-    73                                                       return {"CANCELLED"}
-    74                                           
-    75                                                   # Deselect all edges first
-    76    122413      10196.4      0.1      1.3          for e in bm.edges:
-    77    122412      10583.6      0.1      1.4              e.select = False
-    78                                           
-    79         1         27.6     27.6      0.0          threshold_rad = self.angle_threshold
-    80                                           
-    81         2         66.0     33.0      0.0          @profile
-    82         2          0.7      0.4      0.0          def edge_dir(edge):
-    83                                                       v1, v2 = edge.verts
-    84                                                       return (v2.co - v1.co).normalized()
-    85                                           
-    86         2         69.9     34.9      0.0          @profile
-    87         2          0.5      0.3      0.0          def are_colinear(e1, e2):
-    88                                                       # Check if direction vectors are parallel
-    89                                                       dir1 = edge_dir(e1)
-    90                                                       # guard against zero length edges
-    91                                                       if dir1.length < 1e-6:
-    92                                                           return False
-    93                                                       dir2 = edge_dir(e2)
-    94                                                       if dir2.length < 1e-6:
-    95                                                           return False
-    96                                                       angle = dir1.angle(dir2)
-    97                                                       if not (angle < threshold_rad or abs(angle - 3.14159265) < threshold_rad):
-    98                                                           return False
-    99                                                       # Check if the vector between their start points is also parallel to the direction
-   100                                                       v1 = e1.verts[0].co
-   101                                                       w1 = e2.verts[0].co
-   102                                                       between = w1 - v1
-   103                                                       # If between is zero vector, they share a vertex, so colinear
-   104                                                       if between.length < 1e-6:
-   105                                                           return True
-   106                                                       between_dir = between.normalized()
-   107                                                       angle2 = dir1.angle(between_dir)
-   108                                                       return angle2 < threshold_rad or abs(angle2 - 3.14159265) < threshold_rad
-   109                                           
-   110         1          3.1      3.1      0.0          if self.only_colinear_paths:
-   111                                                       visited = set()
-   112                                                       queue = []
-   113                                                       for e in original_selected_edges:
-   114                                                           queue.append(e)
-   115                                                           visited.add(e)
-   116                                           
-   117                                                       while queue:
-   118                                                           current_edge = queue.pop(0)
-   119                                                           current_edge.select = True
-   120                                                           for v in current_edge.verts:
-   121                                                               for neighbor in v.link_edges:
-   122                                                                   if neighbor is current_edge or neighbor in visited:
-   123                                                                       continue
-   124                                                                   if are_colinear(current_edge, neighbor):
-   125                                                                       queue.append(neighbor)
-   126                                                                       visited.add(neighbor)
+
+   ... lines left out for brevity ...
+
    127                                                   else:
    128    122413      10613.5      0.1      1.4              for e in bm.edges:
    129    244723      20421.4      0.1      2.6                  for sel_edge in original_selected_edges:
@@ -139,10 +88,10 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 
 # inlining
 
-Python function calls are slow, so we inline the normalized direction calculation
+Python function calls are slow, so lets first inline the normalized direction calculation
 
-That runs in 85 ms or 11.5 Ops/s, only a slight improvement. But we also see that normalization takes up a lot of time,
-while we don´t need that for the call to the angle() method as this will take care of it itself.
+That runs in 85 ms or 11.5 Ops/s, only a slight improvement. But we also see that normalization takes up a lot of time (lines 90 and 95),
+while we don´t need that for the call to the `angle()` method as this will take care of it itself.
 
 ```Timer unit: 1e-06 s
 
@@ -187,69 +136,9 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     63                                               @profile
     64                                               def do_execute(self, context: bpy.types.Context) -> set[str]:
     65         1          1.3      1.3      0.0          obj = context.active_object
-    66         1          6.0      6.0      0.0          bm = bmesh.from_edit_mesh(obj.data)
-    67         1          1.7      1.7      0.0          bm.edges.ensure_lookup_table()
-    68                                           
-    69                                                   # Find all originally selected edges
-    70         1       8753.7   8753.7      1.7          original_selected_edges = [e for e in bm.edges if e.select]
-    71         1          0.7      0.7      0.0          if not original_selected_edges:
-    72                                                       self.report({"WARNING"}, "No edges selected")
-    73                                                       return {"CANCELLED"}
-    74                                           
-    75                                                   # Deselect all edges first
-    76    122413      11258.2      0.1      2.2          for e in bm.edges:
-    77    122412      11435.4      0.1      2.2              e.select = False
-    78                                           
-    79         1         13.7     13.7      0.0          threshold_rad = self.angle_threshold
-    80                                           
-    81         2         63.1     31.5      0.0          @profile
-    82         2          0.5      0.3      0.0          def edge_dir(edge):
-    83                                                       v1, v2 = edge.verts
-    84                                                       return (v2.co - v1.co).normalized()
-    85                                           
-    86         2         89.8     44.9      0.0          @profile
-    87         2          0.5      0.3      0.0          def are_colinear(e1, e2):
-    88                                                       # Check if direction vectors are parallel
-    89                                                       v1, v2 = e1.verts
-    90                                                       dir1 = (v2.co - v1.co).normalized()
-    91                                                       # guard against zero length edges
-    92                                                       if dir1.length < 1e-6:
-    93                                                           return False
-    94                                                       v1, v2 = e2.verts
-    95                                                       dir2 = (v2.co - v1.co).normalized()
-    96                                                       if dir2.length < 1e-6:
-    97                                                           return False
-    98                                                       angle = dir1.angle(dir2)
-    99                                                       if not (angle < threshold_rad or abs(angle - 3.14159265) < threshold_rad):
-   100                                                           return False
-   101                                                       # Check if the vector between their start points is also parallel to the direction
-   102                                                       v1 = e1.verts[0].co
-   103                                                       w1 = e2.verts[0].co
-   104                                                       between = w1 - v1
-   105                                                       # If between is zero vector, they share a vertex, so colinear
-   106                                                       if between.length < 1e-6:
-   107                                                           return True
-   108                                                       between_dir = between.normalized()
-   109                                                       angle2 = dir1.angle(between_dir)
-   110                                                       return angle2 < threshold_rad or abs(angle2 - 3.14159265) < threshold_rad
-   111                                           
-   112         1          2.8      2.8      0.0          if self.only_colinear_paths:
-   113                                                       visited = set()
-   114                                                       queue = []
-   115                                                       for e in original_selected_edges:
-   116                                                           queue.append(e)
-   117                                                           visited.add(e)
-   118                                           
-   119                                                       while queue:
-   120                                                           current_edge = queue.pop(0)
-   121                                                           current_edge.select = True
-   122                                                           for v in current_edge.verts:
-   123                                                               for neighbor in v.link_edges:
-   124                                                                   if neighbor is current_edge or neighbor in visited:
-   125                                                                       continue
-   126                                                                   if are_colinear(current_edge, neighbor):
-   127                                                                       queue.append(neighbor)
-   128                                                                       visited.add(neighbor)
+  
+   ... lines left out for brevity ...
+  
    129                                                   else:
    130    122413      11165.8      0.1      2.1              for e in bm.edges:
    131    244723      20276.3      0.1      3.9                  for sel_edge in original_selected_edges:
@@ -268,7 +157,7 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 
 Gets us 74ms or almost 13 Ops/s. 
 
-We can make another slight improvement by not testing it the angle is None, and we can do that providing a fallback value that is way bigger than pi.
+We can make another slight improvement by not testing it the angle is None (line 99), and we can do that providing a fallback value that is way bigger than pi.
 
 ```Timer unit: 1e-06 s
 
@@ -306,97 +195,17 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
    111     40803       6192.3      0.2      3.7              angle2 = dir1.angle(between_dir)
    112     40803       6140.4      0.2      3.6              return angle2 < threshold_rad or abs(angle2 - 3.14159265) < threshold_rad
 
-Total time: 0.465846 s
-File: /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py
-Function: do_execute at line 63
+  
+   ... lines left out for brevity ...
+  
 
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-    63                                               @profile
-    64                                               def do_execute(self, context: bpy.types.Context) -> set[str]:
-    65         1          1.3      1.3      0.0          obj = context.active_object
-    66         1          7.5      7.5      0.0          bm = bmesh.from_edit_mesh(obj.data)
-    67         1          1.5      1.5      0.0          bm.edges.ensure_lookup_table()
-    68                                           
-    69                                                   # Find all originally selected edges
-    70         1       8951.8   8951.8      1.9          original_selected_edges = [e for e in bm.edges if e.select]
-    71         1          0.9      0.9      0.0          if not original_selected_edges:
-    72                                                       self.report({"WARNING"}, "No edges selected")
-    73                                                       return {"CANCELLED"}
-    74                                           
-    75                                                   # Deselect all edges first
-    76    122413       9666.8      0.1      2.1          for e in bm.edges:
-    77    122412      10706.7      0.1      2.3              e.select = False
-    78                                           
-    79         1         23.6     23.6      0.0          threshold_rad = self.angle_threshold
-    80                                           
-    81         2         64.6     32.3      0.0          @profile
-    82         2          0.6      0.3      0.0          def edge_dir(edge):
-    83                                                       v1, v2 = edge.verts
-    84                                                       return (v2.co - v1.co).normalized()
-    85                                           
-    86         2         70.5     35.2      0.0          @profile
-    87         2          0.4      0.2      0.0          def are_colinear(e1, e2):
-    88                                                       # Check if direction vectors are parallel
-    89                                                       v1, v2 = e1.verts
-    90                                                       dir1 = (v2.co - v1.co)  # .normalized()
-    91                                                       # guard against zero length edges
-    92                                                       # if dir1.length < 1e-6:
-    93                                                       #     return False
-    94                                                       v1, v2 = e2.verts
-    95                                                       dir2 = (v2.co - v1.co)  # .normalized()
-    96                                                       # if dir2.length < 1e-6:
-    97                                                       #     return False
-    98                                                       angle = dir1.angle(dir2)
-    99                                                       if angle is None:
-   100                                                           return False
-   101                                                       if not (angle < threshold_rad or abs(angle - 3.14159265) < threshold_rad):
-   102                                                           return False
-   103                                                       # Check if the vector between their start points is also parallel to the direction
-   104                                                       v1 = e1.verts[0].co
-   105                                                       w1 = e2.verts[0].co
-   106                                                       between = w1 - v1
-   107                                                       # If between is zero vector, they share a vertex, so colinear
-   108                                                       if between.length < 1e-6:
-   109                                                           return True
-   110                                                       between_dir = between.normalized()
-   111                                                       angle2 = dir1.angle(between_dir)
-   112                                                       return angle2 < threshold_rad or abs(angle2 - 3.14159265) < threshold_rad
-   113                                           
-   114         1          2.8      2.8      0.0          if self.only_colinear_paths:
-   115                                                       visited = set()
-   116                                                       queue = []
-   117                                                       for e in original_selected_edges:
-   118                                                           queue.append(e)
-   119                                                           visited.add(e)
-   120                                           
-   121                                                       while queue:
-   122                                                           current_edge = queue.pop(0)
-   123                                                           current_edge.select = True
-   124                                                           for v in current_edge.verts:
-   125                                                               for neighbor in v.link_edges:
-   126                                                                   if neighbor is current_edge or neighbor in visited:
-   127                                                                       continue
-   128                                                                   if are_colinear(current_edge, neighbor):
-   129                                                                       queue.append(neighbor)
-   130                                                                       visited.add(neighbor)
-   131                                                   else:
-   132    122413      10974.4      0.1      2.4              for e in bm.edges:
-   133    244723      20581.1      0.1      4.4                  for sel_edge in original_selected_edges:
-   134    122412     404107.5      3.3     86.7                      if are_colinear(sel_edge, e):
-   135       101         12.5      0.1      0.0                          e.select = True
-   136       101          9.3      0.1      0.0                          break
-   137                                           
-   138         1        662.1    662.1      0.1          bmesh.update_edit_mesh(obj.data)
-   139         1          0.6      0.6      0.0          return {"FINISHED"}
-
-  0.17 seconds - /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py:86 - are_colinear
-  0.47 seconds - /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py:63 - do_execute
 ```
 
 ## using a fallback
 
-alas, no difference. If we want further improvements we will have to stop using Blender's mathutils module.
+Alas, no difference (line 101).
+
+If we want further improvements we will have to stop using Blender's mathutils module and reimplement our core routine using numpy.
 
 ```
 Timer unit: 1e-06 s
@@ -435,90 +244,114 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
    111     40803       7396.6      0.2      4.4              angle2 = dir1.angle(between_dir)
    112     40803       6679.8      0.2      4.0              return angle2 < threshold_rad or abs(angle2 - 3.14159265) < threshold_rad
 
-Total time: 0.451665 s
+  
+   ... lines left out for brevity ...
+  
+```
+
+## numpy
+
+With the core routine implemented with numpy, we benchmark at about 64ms or 13.5 Ops/s.
+
+And now only about 59% of the time is spent in the colinearity core routines (line 196), and this does change only marginally if we up the number of cuts from 100 to 500.
+
+This implies that it will be very difficult to improve this, because 500 cuts is well over 3 million edges.
+
+The `select_colinear()` function spends all its time either in core `foreach_get()` or `foreach_set()` method calls (line 40-42,47), which we cannot optimize, or (for about a third of time) in the `colinear_edges()` function (line 46), which has its running time spread pretty evenly across many of its lines (line 55-82). Tweaking those lines may gain a few percent, which then only contributes to a third of 59% of the total, which is a wasted effort (1%  * 33% * 59% ≈ 1/2000).
+
+However, 40% or so of the total runtime is spent switching to and from object mode (lines 195, 197), so it would be nice if we could do without that, and that is something we might look in later.
+
+```
+Timer unit: 1e-06 s
+
+Total time: 0.0105152 s
 File: /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py
-Function: do_execute at line 63
+Function: colinear_edges at line 50
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    63                                               @profile
-    64                                               def do_execute(self, context: bpy.types.Context) -> set[str]:
-    65         1          1.3      1.3      0.0          obj = context.active_object
-    66         1          6.2      6.2      0.0          bm = bmesh.from_edit_mesh(obj.data)
-    67         1          1.2      1.2      0.0          bm.edges.ensure_lookup_table()
-    68                                           
-    69                                                   # Find all originally selected edges
-    70         1       9905.1   9905.1      2.2          original_selected_edges = [e for e in bm.edges if e.select]
-    71         1          0.5      0.5      0.0          if not original_selected_edges:
-    72                                                       self.report({"WARNING"}, "No edges selected")
-    73                                                       return {"CANCELLED"}
-    74                                           
-    75                                                   # Deselect all edges first
-    76    122413       9534.1      0.1      2.1          for e in bm.edges:
-    77    122412      10239.9      0.1      2.3              e.select = False
-    78                                           
-    79         1         13.5     13.5      0.0          threshold_rad = self.angle_threshold
-    80                                           
-    81         2         60.3     30.2      0.0          @profile
-    82         2          0.5      0.2      0.0          def edge_dir(edge):
-    83                                                       v1, v2 = edge.verts
-    84                                                       return (v2.co - v1.co).normalized()
-    85                                           
-    86         2         66.0     33.0      0.0          @profile
-    87         2          0.5      0.3      0.0          def are_colinear(e1, e2):
-    88                                                       # Check if direction vectors are parallel
-    89                                                       v1, v2 = e1.verts
-    90                                                       dir1 = (v2.co - v1.co)  # .normalized()
-    91                                                       # guard against zero length edges
-    92                                                       # if dir1.length < 1e-6:
-    93                                                       #     return False
-    94                                                       v1, v2 = e2.verts
-    95                                                       dir2 = (v2.co - v1.co)  # .normalized()
-    96                                                       # if dir2.length < 1e-6:
-    97                                                       #     return False
-    98                                                       angle = dir1.angle(dir2, 10)
-    99                                                       # if angle is None:
-   100                                                       #     return False
-   101                                                       if not (angle < threshold_rad or abs(angle - 3.14159265) < threshold_rad):
-   102                                                           return False
-   103                                                       # Check if the vector between their start points is also parallel to the direction
-   104                                                       v1 = e1.verts[0].co
-   105                                                       w1 = e2.verts[0].co
-   106                                                       between = w1 - v1
-   107                                                       # If between is zero vector, they share a vertex, so colinear
-   108                                                       if between.length < 1e-6:
-   109                                                           return True
-   110                                                       between_dir = between.normalized()
-   111                                                       angle2 = dir1.angle(between_dir)
-   112                                                       return angle2 < threshold_rad or abs(angle2 - 3.14159265) < threshold_rad
-   113                                           
-   114         1          3.0      3.0      0.0          if self.only_colinear_paths:
-   115                                                       visited = set()
-   116                                                       queue = []
-   117                                                       for e in original_selected_edges:
-   118                                                           queue.append(e)
-   119                                                           visited.add(e)
-   120                                           
-   121                                                       while queue:
-   122                                                           current_edge = queue.pop(0)
-   123                                                           current_edge.select = True
-   124                                                           for v in current_edge.verts:
-   125                                                               for neighbor in v.link_edges:
-   126                                                                   if neighbor is current_edge or neighbor in visited:
-   127                                                                       continue
-   128                                                                   if are_colinear(current_edge, neighbor):
-   129                                                                       queue.append(neighbor)
-   130                                                                       visited.add(neighbor)
-   131                                                   else:
-   132    122413      10874.8      0.1      2.4              for e in bm.edges:
-   133    244723      19389.4      0.1      4.3                  for sel_edge in original_selected_edges:
-   134    122412     390923.9      3.2     86.6                      if are_colinear(sel_edge, e):
-   135       101         11.9      0.1      0.0                          e.select = True
-   136       101          9.4      0.1      0.0                          break
-   137                                           
-   138         1        622.8    622.8      0.1          bmesh.update_edit_mesh(obj.data)
-   139         1          0.5      0.5      0.0          return {"FINISHED"}
+    50                                           @profile
+    51                                           def colinear_edges(selected: np.ndarray, indices, coords, threshold):
+    52         1         26.0     26.0      0.2      colinear = np.zeros_like(selected)
+    53                                           
+    54                                               # calculate direction vectors for each edge
+    55         1       1853.8   1853.8     17.6      edge_dirs = coords[indices[:, 1]] - coords[indices[:, 0]]
+    56         1       2614.2   2614.2     24.9      edge_dirs = edge_dirs / np.linalg.norm(edge_dirs, axis=1)[:, np.newaxis]
+    57                                           
+    58         2         18.1      9.0      0.2      for e in selected.nonzero()[0]:
+    59                                                   # get the direction vector of the selected edge
+    60         1          0.9      0.9      0.0          dir1 = edge_dirs[e]
+    61                                                   # check all other edges for colinearity
+    62         1        559.6    559.6      5.3          angles = np.arccos(np.clip(np.dot(dir1, edge_dirs.T), -1.0, 1.0))
+    63         1         88.4     88.4      0.8          parallel = (angles < threshold) | (np.abs(angles - np.pi) < threshold)
+    64         1          1.7      1.7      0.0          v1 = coords[indices[e, 0]]
+    65         1       1415.6   1415.6     13.5          w1 = coords[indices[:, 0]]
+    66                                                   # vector between start points
+    67         1        716.4    716.4      6.8          between = w1 - v1
+    68                                                   # if the vector between start points is zero, they share a vertex, so colinear
+    69         1       1846.5   1846.5     17.6          between_length = np.linalg.norm(between, axis=1)
+    70         1         14.2     14.2      0.1          connected = between_length < 1e-6
+    71         2         19.6      9.8      0.2          angles_between = np.abs(
+    72         2        130.9     65.5      1.2              np.arccos(
+    73         2        137.6     68.8      1.3                  np.clip(
+    74         1        954.3    954.3      9.1                      np.dot(dir1, (between / between_length[:, np.newaxis]).T), -1.0, 1.0
+    75                                                           )
+    76                                                       )
+    77                                                   )
+    78         2         19.1      9.6      0.2          bparallel = (angles_between < threshold) | (
+    79         1         80.9     80.9      0.8              np.abs(angles_between - np.pi) < threshold
+    80                                                   )
+    81                                                   # colinear if they are parallel and either share a vertex or the angle between the direction vector and the vector between start points is less than the threshold
+    82         1         17.2     17.2      0.2          colinear |= (connected | bparallel) & parallel
+    83                                           
+    84         1          0.1      0.1      0.0      return colinear
 
-  0.17 seconds - /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py:86 - are_colinear
-  0.45 seconds - /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py:63 - do_execute
+Total time: 0.030595 s
+File: /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py
+Function: select_colinear at line 33
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    33                                           @profile
+    34                                           def select_colinear(edges, vertices, threshold):
+    35         1          8.5      8.5      0.0      n_edges = len(edges)
+    36         1          0.3      0.3      0.0      n_vertices = len(vertices)
+    37         1         10.4     10.4      0.0      indices = np.empty(2 * n_edges, dtype=int)
+    38         1          1.4      1.4      0.0      coords = np.empty(3 * n_vertices, dtype=float)
+    39         1          5.7      5.7      0.0      selected = np.zeros(n_edges, dtype=bool)
+    40         1       6524.1   6524.1     21.3      edges.foreach_get("vertices", indices)
+    41         1       2690.8   2690.8      8.8      edges.foreach_get("select", selected)
+    42         1       5470.2   5470.2     17.9      vertices.foreach_get("co", coords)
+    43         1          5.6      5.6      0.0      coords = coords.reshape((n_vertices, 3))
+    44         1          1.1      1.1      0.0      indices = indices.reshape((n_edges, 2))
+    45                                           
+    46         1      10546.0  10546.0     34.5      colinear = colinear_edges(selected, indices, coords, threshold)
+    47         1       5318.3   5318.3     17.4      edges.foreach_set("select", colinear)
+    48         1         12.7     12.7      0.0      return np.count_nonzero(colinear)
+
+Total time: 0.0516391 s
+File: /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py
+Function: do_execute at line 118
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   118                                               @profile
+   119                                               def do_execute(self, context: bpy.types.Context) -> set[str]:
+  
+   ... lines left out for brevity ...
+  
+   195         1       3270.2   3270.2      6.3              bpy.ops.object.mode_set(mode="OBJECT")
+   196         1      30637.2  30637.2     59.3              select_colinear(obj.data.edges, obj.data.vertices, self.angle_threshold)
+   197         1      17544.0  17544.0     34.0              bpy.ops.object.mode_set(mode="EDIT")
+   198         1          0.8      0.8      0.0          return {"FINISHED"}
+
+  0.01 seconds - /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py:50 - colinear_edges
+  0.03 seconds - /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py:33 - select_colinear
+  0.05 seconds - /workspaces/blenderaddons-ng/add_ons/select_colinear_edges.py:118 - do_execute
 ```
+
+## conclusion
+
+Switching to use numpy for the most expensive mode of colinearity testing gains us a lot: Not only do we go from 92ms to 64ms for the 100 times subdivided cube, the 500 times subdivided cube now almost finishes in the same time, where we would not even dare trying it on that number of edges with the old algorithm.
+
+There might me some room for improvement left, but we leave it at that for now.

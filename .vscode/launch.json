@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  
+  "configurations": [{
+  "name": "Python: Debug Tests",
+  "type": "python",
+  "request": "launch",
+  "program": "${file}",
+  "purpose": ["debug-test"],
+  "console": "integratedTerminal",
+  "justMyCode": true,
+  "env": {"PYTEST_ADDOPTS": "--no-cov"} // coverage messes up breakpoints, see: https://code.visualstudio.com/docs/python/testing#_pytest-configuration-settings
+ }]
+}
+
+
