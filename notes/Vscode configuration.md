@@ -29,9 +29,23 @@ With the current settings autodiscovery, coverage and performing the tests works
 but if we also want be able to debug any tests interactively with the Python debugger
 we need to disable coverage during debugging otherwise breakpoints simply won't trigger.
 
-this is done by adding the following to [launch.json](/.vscode/launch.json):
+This is done by adding the following to [launch.json](/.vscode/launch.json):
 
 ```json
+{
+  "version": "0.2.0",
+  
+  "configurations": [{
+  "name": "Python: Debug Tests",
+  "type": "python",
+  "request": "launch",
+  "program": "${file}",
+  "purpose": ["debug-test"],
+  "console": "integratedTerminal",
+  "justMyCode": true,
+  "env": {"PYTEST_ADDOPTS": "--no-cov"} // coverage messes up breakpoints, see: https://code.visualstudio.com/docs/python/testing#_pytest-configuration-settings
+ }]
+}
 
 ```
 
@@ -57,4 +71,32 @@ we only run the benchmarks and autosave them:
 
 ## profiling
 
+For profiling we don´t change anything in the Vscode config, as we simply run the add-on to profile from the command line. For example:
+
+```bash
+LINE_PROFILE=1 python3 add_ons/select_colinear_edges.py
+python3 -m line_profiler -rtmz profile_output.lprof
+```
+
 ## DevContainer
+
+The DevContainer we work in is based on the [Dockerfile](/Dockerfile) we provide ourselves:
+
+[devcontainer.json](/.devcontainer/devcontainer.json)
+
+```json
+{
+	"name": "Existing Dockerfile",
+	"build": {
+		// Sets the run context to one level up instead of the .devcontainer folder.
+		"context": "..",
+		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+		"dockerfile": "../Dockerfile"
+	}
+}
+```
+
+## dependencies
+
+Any pytest / coverage / benchmark dependencies are listed in [requirements.txt](/requirements.txt)
+
