@@ -1,5 +1,5 @@
-[![Blenderaddons ng logo](docs/Blenderaddons%20ng%20logo%20small.png)](https://www.blender.org/download/releases/4-4/)
-![Blender](blender-version.svg) ![Python](python.svg) [![Test Status](https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml/badge.svg)](https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml) ![Coverage](coverage.svg)
+![Blenderaddons ng logo](docs/Blenderaddons%20ng%20logo%20small.png)
+[![Blender](blender-version.svg)](https://www.blender.org/download/releases/4-4/) ![Python](python.svg) [![Test Status](https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml/badge.svg)](https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml) ![Coverage](coverage.svg)
 
 # blenderaddons-ng
 
