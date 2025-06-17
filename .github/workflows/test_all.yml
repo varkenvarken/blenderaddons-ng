@@ -37,10 +37,26 @@ jobs:
         COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); print(round(float(root.get('line-rate'))*100, 2))")
         echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
     
+    - name: Determine badge color
+      id: badge_color
+      run: |
+        COVERAGE=${{ steps.coverage.outputs.coverage }}
+        if (( $(echo "$COVERAGE >= 90" | bc -l) )); then
+          COLOR=brightgreen
+        elif (( $(echo "$COVERAGE >= 75" | bc -l) )); then
+          COLOR=yellow
+        elif (( $(echo "$COVERAGE >= 50" | bc -l) )); then
+          COLOR=orange
+        else
+          COLOR=red
+        fi
+        echo "color=$COLOR" >> $GITHUB_OUTPUT
+
     - name: Download coverage badge
       run: |
-        curl -o coverage.svg "https://img.shields.io/badge/Coverage-${{ steps.coverage.outputs.coverage }}%25-brightgreen"
-    
+        curl -o coverage.svg "https://img.shields.io/badge/Coverage-${{ steps.coverage.outputs.coverage }}%25-${{ steps.badge_color.outputs.color }}"
+        - name: Download coverage badge
+   
     - name: Commit coverage badge
       run: |
         git config --global user.name "github-actions[bot]"
