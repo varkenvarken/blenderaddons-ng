@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Simple Stonework Generator",
     "author": "Your Name",
-    "version": (0, 0, 20250611074806),
+    "version": (0, 0, 20250620101525),
     "blender": (4, 4, 0),
     "location": "Object > Stonework",
     "description": "Create a stonework pattern with random rows of stones",
@@ -40,6 +40,8 @@ def stonework(
     minimum_stone_width=0.5,
     extra_stone_width=0.5,
     first_stone_width=0.5,
+    extra_stone_width_of_first_stone=0.5,
+    gap_width=0.02,
 ):
     from dataclasses import dataclass
     import random
@@ -52,13 +54,17 @@ def stonework(
         y1: float
         x2: float
         y2: float
+        is_stone: bool
 
     @dataclass
     class Vertex:
         x: float
         y: float
 
-    class Polygon(list): ...
+    class Polygon(list):
+        def __init__(self, is_stone=True):
+            super().__init__()
+            self.is_stone = is_stone
 
     def in_range(positions, a, b):
         """
@@ -74,31 +80,72 @@ def stonework(
 
     # create a list of rectangular faces, going left to right, bottom to top
     faces = list()
+    stones = []
+    gaps = []
     y = 0.0
     row_index = 0
     while y < wall_height:
         x = 0.0
         column_index = 0
-        while x < wall_width:
-            stone_width = (
-                first_stone_width
-                if column_index == 0 and row_index % 2 == 0
-                else minimum_stone_width
-            ) + random.random() * extra_stone_width
-            right_edge = min(x + stone_width, wall_width)
-            top_edge = min(y + stone_height, wall_height)
+        if row_index % 2 == 0:
+            while x < wall_width:
+                
+                # add a stone
+                stone_width = (
+                    first_stone_width + random.random() * extra_stone_width_of_first_stone
+                    if column_index == 0 and row_index % 4 == 0  # every other row but accounting for the extra rows from the horizontal gaps
+                    else minimum_stone_width  + random.random() * extra_stone_width
+                )
+                right_edge = min(x + stone_width, wall_width)
+                top_edge = min(y + stone_height, wall_height)
+                face = Face(
+                    row=row_index,
+                    column=column_index,
+                    x1=x,
+                    x2=right_edge,
+                    y1=y,
+                    y2=top_edge,
+                    is_stone=True,
+                )
+                faces.append(face)
+                stones.append(face)
+
+                x += stone_width
+                column_index += 1
+
+                # add a vertical gap between the stones
+                if x < wall_width:
+                    right_edge = min(x + gap_width, wall_width)
+                    top_edge = min(y + stone_height, wall_height)
+                    face = Face(
+                        row=row_index,
+                        column=column_index,
+                        x1=x,
+                        x2=right_edge,
+                        y1=y,
+                        y2=top_edge,
+                        is_stone=False,
+                    )
+                    faces.append(face)
+                    gaps.append(face)
+                    x += gap_width
+                    column_index += 1
+
+            y += stone_height
+        else:
             face = Face(
                 row=row_index,
                 column=column_index,
-                x1=x,
-                x2=right_edge,
+                x1=0.0,
+                x2=wall_width,
                 y1=y,
-                y2=top_edge,
+                y2=min(y + gap_width, wall_height),
+                is_stone=False,
             )
-            faces.append(face)
-            x += stone_width
-            column_index += 1
-        y += stone_height
+            faces.append(face)  
+            gaps.append(face)
+            y += gap_width
+
         row_index += 1
 
     # collect all x values for each height, make them unique and sort them in ascending order
@@ -126,7 +173,7 @@ def stonework(
     new_vertex_index = 0
     polygons = []
     for face in faces:
-        polygon = Polygon()
+        polygon = Polygon(is_stone=face.is_stone)
         polygons.append(polygon)
 
         for lower_x in in_range(rows_of_x_values[face.row], face.x1, face.x2):
@@ -155,18 +202,13 @@ def stonework(
     # invert the mapping from vertex coordinates --> index to index --> vertex coordinates
     unique_vertices = {v: k for k, v in unique_vertices.items()}
 
-    # # print a list of coordinates and indices. Just so we can do some checks in a spreadheet
-    # for p in polygons:
-    #     for vertex in p:
-    #         vert = unique_vertices[vertex]
-    #         print(f"{vert[0]:.4f},{vert[1]:.4f},{vertex}")
     return polygons, unique_vertices
 
 
 class OBJECT_OT_stonework(bpy.types.Operator):
     bl_idname = "object.stonework"
     bl_label = "Add a wall of random stones"
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER", "UNDO", "PRESET"}
 
     wall_width: bpy.props.FloatProperty(
         name="Plane Width",
@@ -216,17 +258,17 @@ class OBJECT_OT_stonework(bpy.types.Operator):
         subtype="DISTANCE",
         unit="LENGTH",
     )
-    merge_threshold: bpy.props.FloatProperty(
-        name="Merge Threshold",
-        default=1e-6,
-        min=1e-8,
-        description="Distance threshold for merging vertices",
+    extra_stone_width_of_first_stone: bpy.props.FloatProperty(
+        name="Extra First Stone Width",
+        default=1.0,
+        min=0.0,
+        description="Random width added to each individual first stone",
         subtype="DISTANCE",
         unit="LENGTH",
     )
     gap_width: bpy.props.FloatProperty(
         name="Gap Width",
-        default=0.05,
+        default=0.01,
         min=0.0,
         description="Width of the gap between the stones",
         subtype="DISTANCE",
@@ -234,7 +276,7 @@ class OBJECT_OT_stonework(bpy.types.Operator):
     )
     gap_depth: bpy.props.FloatProperty(
         name="Gap Depth",
-        default=-0.02,
+        default=0.01,
         description="Depth of the gap between the stones",
         subtype="DISTANCE",
         unit="LENGTH",
@@ -256,9 +298,18 @@ class OBJECT_OT_stonework(bpy.types.Operator):
         Note that no profiling is done if line_profiler is not available or
         if the environment variable `LINE_PROFILE` is not set to "1".
         """
+
+        
         mesh = bpy.data.meshes.new("RandomRowPlane")
         obj = bpy.data.objects.new("RandomRowPlane", mesh)
         context.collection.objects.link(obj)
+        
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_mode(type="FACE")
+        bpy.ops.object.mode_set(mode="OBJECT")
+        
+        
         bm = bmesh.new()
 
         polygons, verts = stonework(
@@ -268,6 +319,8 @@ class OBJECT_OT_stonework(bpy.types.Operator):
             minimum_stone_width=self.minimum_stone_width,
             extra_stone_width=self.extra_stone_width,
             first_stone_width=self.minimum_stone_width_of_first_stone,
+            extra_stone_width_of_first_stone=self.extra_stone_width_of_first_stone,
+            gap_width=self.gap_width,
         )
 
         indices = list(verts.keys())
@@ -279,61 +332,10 @@ class OBJECT_OT_stonework(bpy.types.Operator):
         bm.verts.ensure_lookup_table()
 
         for p in polygons:
-            bm.faces.new([bm_verts[i] for i in p])
-
-        bm.to_mesh(mesh)
-        bm.free()
-
-        # Switch to edit mode and edge select mode
-        bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.mode_set(mode="EDIT")
-        bpy.ops.mesh.select_mode(type="EDGE")
-
-        # Deselect all edges first
-        bm = bmesh.from_edit_mesh(obj.data)
-        bm.edges.ensure_lookup_table()
-        for e in bm.edges:
-            e.select = False
-
-        # Select all non-boundary edges
-        for e in bm.edges:
-            if not e.is_boundary:
-                e.select = True
-
-        bmesh.update_edit_mesh(obj.data, loop_triangles=False, destructive=False)
-
-        affected = bmesh.ops.bevel(
-            bm,
-            geom=[e for e in bm.edges if e.select],
-            offset=self.gap_width,
-            offset_type="WIDTH",
-            profile_type="SUPERELLIPSE",
-            segments=1,
-            profile=0.5,
-            affect="EDGES",
-            clamp_overlap=True,
-            material=-1,
-            loop_slide=False,
-            mark_seam=False,
-            mark_sharp=False,
-            harden_normals=False,
-            face_strength_mode="NONE",
-            miter_outer="SHARP",
-            miter_inner="SHARP",
-            spread=0,
-            # custom_profile=None,
-            vmesh_method="ADJ",
-        )
+            face = bm.faces.new([bm_verts[i] for i in p])
+            face.select_set(p.is_stone)
 
         if abs(self.gap_depth) > 1e-5:
-            # Select all faces first
-            for f in bm.faces:
-                f.select_set(True)
-
-            # Deselect all bevel faces
-            for f in affected["faces"]:
-                f.select_set(False)
-
             extruded = bmesh.ops.extrude_discrete_faces(
                 bm, faces=[f for f in bm.faces if f.select]
             )
@@ -342,12 +344,11 @@ class OBJECT_OT_stonework(bpy.types.Operator):
                 for v in f.verts:
                     v.co.z += self.gap_depth
 
-        bmesh.update_edit_mesh(obj.data, loop_triangles=False, destructive=True)
-
-        bpy.ops.object.mode_set(mode="OBJECT")
+        bm.to_mesh(mesh)
+        bm.free()
 
     def execute(self, context) -> set[str]:  # type: ignore
-        """Move the active object along the X axis."""
+        """Generate a stonework wall."""
         random.seed(self.seed)
         self.do_execute(context)
         return {"FINISHED"}
