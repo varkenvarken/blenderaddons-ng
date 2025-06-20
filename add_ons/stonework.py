@@ -29,7 +29,6 @@ from mathutils import Vector
 
 # TODO: add tests
 # TODO: prevent last stone in a row from being too narrow
-# TODO: change the beveling: generate the gap between the stones directly (currently we get inconsistent widths because of overlap clamping)
 # TODO: add a variable stone height
 
 
@@ -42,6 +41,7 @@ def stonework(
     first_stone_width=0.5,
     extra_stone_width_of_first_stone=0.5,
     gap_width=0.02,
+    half_stone_probability=0.0
 ):
     from dataclasses import dataclass
     import random
@@ -78,6 +78,8 @@ def stonework(
                 r.append(p)
         return r
 
+    half_stone_probability /= 100.0
+
     # create a list of rectangular faces, going left to right, bottom to top
     faces = list()
     stones = []
@@ -92,9 +94,9 @@ def stonework(
                 
                 # add a stone
                 stone_width = (
-                    first_stone_width + random.random() * extra_stone_width_of_first_stone
+                    (first_stone_width + random.random() * extra_stone_width_of_first_stone) * (0.5 if random.random() < half_stone_probability else 1.0)
                     if column_index == 0 and row_index % 4 == 0  # every other row but accounting for the extra rows from the horizontal gaps
-                    else minimum_stone_width  + random.random() * extra_stone_width
+                    else (minimum_stone_width  + random.random() * extra_stone_width) * (0.5 if random.random() < half_stone_probability else 1.0)
                 )
                 right_edge = min(x + stone_width, wall_width)
                 top_edge = min(y + stone_height, wall_height)
@@ -209,7 +211,8 @@ class OBJECT_OT_stonework(bpy.types.Operator):
     bl_idname = "object.stonework"
     bl_label = "Add a wall of random stones"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
-
+    bl_description = "Create a stonework pattern with random rows of stones"
+    
     wall_width: bpy.props.FloatProperty(
         name="Plane Width",
         default=4.0,
@@ -281,6 +284,17 @@ class OBJECT_OT_stonework(bpy.types.Operator):
         subtype="DISTANCE",
         unit="LENGTH",
     )
+    half_stone_probability: bpy.props.FloatProperty(
+        name="Half Stone Probability",
+        default=0.0,
+        min=0.0,
+        max=100.0,
+        description="Probability of the any stone in a row being half the width",
+        subtype="PERCENTAGE",
+        unit="NONE",
+        step=1,
+        precision=4,
+    )
     seed: bpy.props.IntProperty(
         name="Seed",
         default=0,
@@ -321,6 +335,7 @@ class OBJECT_OT_stonework(bpy.types.Operator):
             first_stone_width=self.minimum_stone_width_of_first_stone,
             extra_stone_width_of_first_stone=self.extra_stone_width_of_first_stone,
             gap_width=self.gap_width,
+            half_stone_probability=self.half_stone_probability,
         )
 
         indices = list(verts.keys())
@@ -358,7 +373,7 @@ OPERATOR_NAME: str = OBJECT_OT_stonework.__name__
 
 
 def menu_func(self, context):
-    self.layout.operator(OBJECT_OT_stonework.bl_idname)
+    self.layout.operator(OBJECT_OT_stonework.bl_idname, text="Stonework Wall", icon="TEXTURE")
 
 
 def register():
