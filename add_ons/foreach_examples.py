@@ -107,6 +107,21 @@ def get_active_camera_position():
     return np.array(cam.matrix_world.translation, dtype=np.float32)
 
 @profile
+def get_closest_vertex_index_to_camera_naive(world_verts, cam_pos):
+    if cam_pos is None or world_verts is None:
+        return None
+
+    closest_distance = np.inf
+    closest_index = -1
+    for vertex_index,vertex_pos in enumerate(world_verts):
+        direction = vertex_pos - cam_pos
+        distance = np.linalg.norm(direction)
+        if distance < closest_distance:
+            closest_distance = distance
+            closest_index = vertex_index
+    return closest_index, closest_distance
+
+@profile
 def get_closest_vertex_index_to_camera(world_verts, cam_pos):
     if cam_pos is None or world_verts is None:
         return None
@@ -136,7 +151,7 @@ class OBJECT_OT_foreach_ex(bpy.types.Operator):
             world_arr = to_world_space(arr, obj)
             cam_pos = get_active_camera_position()
             if cam_pos is not None:
-                return get_closest_vertex_index_to_camera(world_arr, cam_pos=cam_pos)
+                return get_closest_vertex_index_to_camera_naive(world_arr, cam_pos=cam_pos)
             else:
                 self.report({'WARNING'}, "No active camera object")    
         else:
