@@ -30,6 +30,6 @@ WORKDIR /addons
 COPY requirements.txt .
 RUN pip3 install --upgrade -r requirements.txt
 
-COPY add-ons .
+COPY add_ons .
 
 CMD ["python3", "--version"]
