@@ -22,13 +22,63 @@ except ImportError:  # pragma: no cover
     profile = lambda x: x
 
 from os import environ
+from time import time
 import bpy
-from mathutils import Euler
+from mathutils import Euler, Vector
 from math import pi
 
-from bpy.types import Object, Context
+from bpy.types import Object, Mesh, Context
 
 import numpy as np
+
+@profile    
+def get_vertex_positions(obj:Object) -> list[Vector]:
+    mesh: Mesh = obj.data # type: ignore
+    return [v.co for v in mesh.vertices]
+
+@profile    
+def get_vertex_positions_np(obj):
+    mesh = obj.data
+    coords = np.empty(len(mesh.vertices) * 3, dtype=np.float32)
+    mesh.vertices.foreach_get("co", coords)
+    return coords.reshape(-1, 3)
+
+@profile
+def to_world_space(verts, obj):
+    verts_h = np.concatenate([verts, np.ones((len(verts), 1))], axis=1)
+    mat = np.array(obj.matrix_world, dtype=np.float32)
+    world_verts = verts_h @ mat.T
+    return world_verts[:, :3]
+
+@profile
+def get_active_camera_position():
+    cam = bpy.context.scene.camera
+    if cam is None:
+        return None
+    return np.array(cam.matrix_world.translation, dtype=np.float32)
+
+@profile
+def get_closest_vertex_index_to_camera_naive(world_verts, cam_pos):
+    if cam_pos is None or world_verts is None:
+        return None
+
+    closest_distance = np.inf
+    closest_index = -1
+    for vertex_index,vertex_pos in enumerate(world_verts):
+        direction = vertex_pos - cam_pos
+        distance = np.linalg.norm(direction)
+        if distance < closest_distance:
+            closest_distance = distance
+            closest_index = vertex_index
+    return closest_index, closest_distance
+
+@profile
+def get_closest_vertex_index_to_camera(world_verts, cam_pos):
+    if cam_pos is None or world_verts is None:
+        return None
+    dists = np.linalg.norm(world_verts - cam_pos, axis=1)
+    i = np.argmin(dists)
+    return i, dists[i]
 
 @profile
 def ray_intersect_triangles(vertices, triangles, ray):
@@ -81,84 +131,52 @@ def ray_intersect_triangles(vertices, triangles, ray):
     else:
         return None
 
-@profile    
-def get_vertex_positions_np(obj):
-    if not obj or obj.type != 'MESH':
-        return None
-    mesh = obj.data
-    coords = np.empty(len(mesh.vertices) * 3, dtype=np.float32)
-    mesh.vertices.foreach_get("co", coords)
-    return coords.reshape(-1, 3)
-
-@profile
-def to_world_space(verts, obj):
-    if obj is None:
-        return None
-    verts_h = np.concatenate([verts, np.ones((verts.shape[0], 1))], axis=1)
-    mat = np.array(obj.matrix_world, dtype=np.float32)
-    world_verts = verts_h @ mat.T
-    return world_verts[:, :3]
-
-@profile
-def get_active_camera_position():
-    cam = bpy.context.scene.camera
-    if cam is None:
-        return None
-    return np.array(cam.matrix_world.translation, dtype=np.float32)
-
-@profile
-def get_closest_vertex_index_to_camera_naive(world_verts, cam_pos):
-    if cam_pos is None or world_verts is None:
-        return None
-
-    closest_distance = np.inf
-    closest_index = -1
-    for vertex_index,vertex_pos in enumerate(world_verts):
-        direction = vertex_pos - cam_pos
-        distance = np.linalg.norm(direction)
-        if distance < closest_distance:
-            closest_distance = distance
-            closest_index = vertex_index
-    return closest_index, closest_distance
-
-@profile
-def get_closest_vertex_index_to_camera(world_verts, cam_pos):
-    if cam_pos is None or world_verts is None:
-        return None
-    dists = np.linalg.norm(world_verts - cam_pos, axis=1)
-    i = np.argmin(dists)
-    return i, dists[i]
-
 class OBJECT_OT_foreach_ex(bpy.types.Operator):
     bl_idname = "object.foreach_ex"
     bl_label = "Foreach Example"
     bl_options = {"REGISTER", "UNDO"}
 
+    mode: bpy.props.EnumProperty(
+        name="Mode",
+        description="Choose algorithm to use",
+        items=[
+            ('NAIVE', "Naive", "Naive Python implementation"),
+            ('FOREACH', "Foreach", "Use mesh.foreach_get / foreach_set"),
+            ('BROADCAST', "Broadcast", "Use NumPy broadcasting"),
+        ],
+        default='NAIVE',
+    )
+
+    debug: bpy.props.BoolProperty(
+        name="Debug",
+        description="Enable debug output",
+        default=False,
+    )
+
     @classmethod
     def poll(cls, context):
-        return context.active_object is not None and context.mode == "OBJECT"
+        return context.active_object is not None and context.mode == "OBJECT" and context.active_object.type == "MESH"
 
-    @profile  # type: ignore (if line_profiler is available)
-    def do_execute(self, context: Context) -> None:
+    @profile  # type: ignore (if line_profiler is available we get a complaint here)
+    def do_execute(self, context: Context):
         """Expensive part is moved out of the execute method to allow profiling.
 
         Note that no profiling is done if line_profiler is not available or
         if the environment variable `LINE_PROFILE` is not set to "1".
         """
-        obj: Object | None = context.active_object
-        arr = get_vertex_positions_np(obj)
-        if arr is not None:
-            world_arr = to_world_space(arr, obj)
-            cam_pos = get_active_camera_position()
-            if cam_pos is not None:
-                return get_closest_vertex_index_to_camera_naive(world_arr, cam_pos=cam_pos)
-            else:
-                self.report({'WARNING'}, "No active camera object")    
-        else:
-            self.report({'WARNING'}, "No active mesh object")
+        obj = context.active_object
+        arr = get_vertex_positions(obj)  # type: ignore  (the poll function guarantees we have an active mesh)
+        world_arr = to_world_space(arr, obj)
+        return get_closest_vertex_index_to_camera_naive(world_arr, cam_pos=self.cam_pos)
     
     def execute(self, context: Context) -> set[str]:  # type: ignore
-        print(self.do_execute(context))
+        self.cam_pos = get_active_camera_position()
+        if self.cam_pos is None:
+            self.report({'WARNING'}, "No active camera object")
+        else:
+            result = self.do_execute(context)
+            if self.debug:
+                print(result)
         return {"FINISHED"}
 
 
@@ -188,29 +206,52 @@ if __name__ == "__main__":  # pragma: no cover
     # the line_profiler will profile the execution of the operator.
     # and print the profiling results.
 
+    import argparse
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-s", "--subdivisions", type=int, default=5, help="number of subdivisions for the cube")
+    parser.add_argument("-r", "--range", action="store_true", help="run the operator for a range of subdivision counts (0..subdivisions)")
+    parser.add_argument(
+        "-m",
+        "--mode",
+        choices=["NAIVE", "FOREACH", "BROADCAST"],
+        default="NAIVE",
+        help="Mode to pass to the operator (NAIVE, FOREACH, BROADCAST)",
+    )
+    args, _ = parser.parse_known_args()
+    subdivisions = max(0, int(args.subdivisions))
+    cli_mode = args.mode
+
     register()
 
     bpy.ops.mesh.primitive_cube_add(location=(0,0,0))
     obj = bpy.context.active_object
- 
-    # Subdivide the primitive cube a few times
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.subdivide(number_cuts=40)
-    bpy.ops.mesh.subdivide(number_cuts=40)  # this gets us to about 17 million verts
-    bpy.ops.object.mode_set(mode='OBJECT')
-    # Print number of vertices after subdivision
-    num_verts = len(obj.data.vertices)
-    print(f"{num_verts=}")
+
     # position and orient the default camera
     cam = bpy.context.scene.camera
     cam.location = 10,0,0  # on the x-axis
     cam.rotation_euler = Euler((pi/2, 0.0, pi/2), 'XYZ') # pointing towards the origin
 
-    # execute the operator
-    result = bpy.ops.object.foreach_ex("INVOKE_DEFAULT")
-    # this is not a unit test, but at least we know that the operator works
-    assert result == {"FINISHED"}
+    if args.range:
+        print("vertices,time")
+
+    for subdivision in range(subdivisions):
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.subdivide()
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        if args.range or subdivision == subdivisions - 1:  # always print the last one
+            # execute the operator
+            start = time()
+            result = bpy.ops.object.foreach_ex("INVOKE_DEFAULT", mode=cli_mode)
+            seconds = time() - start
+
+            # Print number of vertices after subdivision and the time it took to execute the operator
+            num_verts = len(obj.data.vertices)
+            print(f"{num_verts},{seconds}")
+
+            # this is not a unit test, but at least we know that the operator works
+            assert result == {"FINISHED"}
 
     unregister()
 
