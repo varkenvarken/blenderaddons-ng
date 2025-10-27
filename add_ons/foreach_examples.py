@@ -16,12 +16,16 @@ bl_info = {
 # `LINE_PROFILE` is set to "1"
 # and the line_profiler package is installed
 # otherwise, the operator will run without profiling
+from os import environ
+
 try:
-    from line_profiler import profile
+    if environ.get("LINE_PROFILE") == "1":
+        from line_profiler import profile
+    else:  # pragma: no cover
+        profile = lambda x: x
 except ImportError:  # pragma: no cover
     profile = lambda x: x
 
-from os import environ
 from time import time
 from typing import Any, Tuple
 import bpy
