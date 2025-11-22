@@ -114,8 +114,11 @@ def multiply_vector_matrix_array_np_dot_in_place(a: MAT3x3, x):
     return x
 
 
-vectors = np.array([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
+# test values (all values are float32 because that is what Blender uses)
+# input vectors
+vectors = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1]], dtype=np.float32)
 
+# transformation matrices
 matrices = np.array(
     [
         # 90 degrees counter clockwise around z-axis
@@ -130,23 +133,29 @@ matrices = np.array(
     dtype=np.float32,
 )
 
+# expected results for matrix x vector multiplication, shape = (number of transformation matrices, number of input vectors)
 results_row = np.array(
     [
-        [[0, 1, 0], [-1, 0, 0]],
+        [[0, 1, 0], [-1, 0, 0], [0, 0, 1], [0, 1, 1]],
         [
             [0.7071068286895752, 0.7071068286895752, 0.0],
             [-0.7071068286895752, 0.7071068286895752, 0.0],
+            [0, 0, 1],
+            [0.7071068286895752, 0.7071068286895752, 1.0],
         ],
     ],
     dtype=np.float32,
 )
 
+# expected results for vector x matrix multiplication, shape = (number of transformation matrices, number of input vectors)
 results_col = np.array(
     [
-        [[0, -1, 0], [1, 0, 0]],
+        [[0, -1, 0], [1, 0, 0], [0, 0, 1], [0, -1, 1]],
         [
             [0.7071068286895752, -0.7071068286895752, 0.0],
             [0.7071068286895752, 0.7071068286895752, 0.0],
+            [0, 0, 1],
+            [0.7071068286895752, -0.7071068286895752, 1.0],
         ],
     ],
     dtype=np.float32,
@@ -200,20 +209,31 @@ class TestMatrixMultiplication:
 
 
 if __name__ == "__main__":
+
+    # input values used for the tests we measure with timeit
     vector = np.array([1, 0, 0], dtype=np.float32)
     matrix = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]], dtype=np.float32)
 
+    # number of vectors to use for native implementations / per vector functions (will be multiplied by 100_000)
     sizes = (1, 2, 5, 10)
+
+    # number of vectors to use for vectorized numpy implementations (will be multiplied by 100_000)
     vsizes = (1, 2, 5, 10, 20, 50, 100)
+
+    # number of times to measure vectorized implementations (elapsed time will be averaged)
     repeats = 5
 
+    # width of the first column
     width = 50
+
+    # print header
     print()
     print(f"{'function':{width}s},  seconds elapsed (lower is better)")
     print(
         f"{'number of vectors':{width}s},{','.join(f'{str(s * 100_000):>8s}' for s in vsizes)}"
     )
 
+    # measure the performance of the naive / per vector functions
     for function in (
         multiply_matrix_vector,
         multiply_matrix_vector_comprehension,
@@ -223,12 +243,12 @@ if __name__ == "__main__":
 
         for factor in sizes:
             ops = factor * 100_000
-            multiplier = 10 / factor
 
             timer = Timer(f"{function.__name__}(matrix, vector)", globals=globals())
             t = timer.timeit(ops)
             print(f"{t:8.4f},", end="")
 
+    # measure the performance of the vectorized functions
     for function in (
         multiply_matrix_vector_array_np_dot,
         multiply_matrix_vector_array_np_einsum,
@@ -238,7 +258,6 @@ if __name__ == "__main__":
 
         for factor in vsizes:
             ops = factor * 100_000
-            multiplier = 10 / factor
 
             t = 0.0
             for r in range(repeats):
@@ -247,6 +266,6 @@ if __name__ == "__main__":
                 start = time()
                 function(matrix, vectors)
                 t += time() - start
-            print(f"{t/repeats:8.4f},", end="")
+            print(f"{t / repeats:8.4f},", end="")
 
     print("\n")
