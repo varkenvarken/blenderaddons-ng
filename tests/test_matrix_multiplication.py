@@ -5,6 +5,8 @@ import numpy as np
 T = np.dtype[np.float32]
 VEC3 = np.ndarray[tuple[1, 3], T]
 MAT3x3 = np.ndarray[tuple[3, 3], T]
+VEC4 = np.ndarray[tuple[1, 4], T]
+MAT4x4 = np.ndarray[tuple[4, 4], T]
 
 # see: https://en.wikipedia.org/wiki/Matrix_multiplication
 
@@ -27,6 +29,20 @@ def multiply_vector_matrix(x: VEC3, a: MAT3x3) -> VEC3:
     return y
 
 
+def multiply_vector_matrix_4x4(x: VEC4, a: MAT4x4) -> VEC4:
+    """
+    Multiply a column vector X with a matrix A.
+
+    Y_i = SUM_j (A_ij * X_j)
+    """
+    y: VEC4 = np.ndarray(4, dtype=np.float32)
+    for i in range(4):
+        y[i] = 0
+        for j in range(4):
+            y[i] += a[i, j] * x[j]
+    return y
+
+
 def multiply_matrix_vector(a: MAT3x3, x: VEC3) -> VEC3:
     """
     Multiply a matrix A with a row vector X.
@@ -41,6 +57,20 @@ def multiply_matrix_vector(a: MAT3x3, x: VEC3) -> VEC3:
     return y
 
 
+def multiply_matrix_vector_4x4(a: MAT4x4, x: VEC4) -> VEC4:
+    """
+    Multiply a matrix A with a row vector X.
+
+    Y_k = SUM_j (A_jk * X_j)
+    """
+    y: VEC4 = np.ndarray(4, dtype=np.float32)
+    for k in range(4):
+        y[k] = 0
+        for j in range(4):
+            y[k] += a[j, k] * x[j]
+    return y
+
+
 def multiply_vector_matrix_comprehension(x: VEC3, a: MAT3x3) -> VEC3:
     """
     Multiply a column vector X with a matrix A.
@@ -50,6 +80,18 @@ def multiply_vector_matrix_comprehension(x: VEC3, a: MAT3x3) -> VEC3:
     y: VEC3 = np.ndarray(3, dtype=np.float32)
     for i in range(3):
         y[i] = sum(a[i, j] * x[j] for j in range(3))
+    return y
+
+
+def multiply_vector_matrix_comprehension_4x4(x: VEC4, a: MAT4x4) -> VEC4:
+    """
+    Multiply a column vector X with a matrix A.
+
+    Y_i = SUM_j (A_ij * X_j)
+    """
+    y: VEC3 = np.ndarray(4, dtype=np.float32)
+    for i in range(4):
+        y[i] = sum(a[i, j] * x[j] for j in range(4))
     return y
 
 
@@ -161,6 +203,18 @@ results_col = np.array(
     dtype=np.float32,
 )
 
+position = np.array([1, 0, 0, 1], dtype=np.float32)
+normal = np.array([1, 0, 0, 0], dtype=np.float32)
+transform = np.array(
+    (
+        (0.7071067690849304, -0.7071067690849304, 0.0, 0.1),
+        (0.7071067690849304, 0.7071067690849304, 0.0, 0.0),
+        (0.0, 0.0, 1.0, 0.0),
+        (0.0, 0.0, 0.0, 1.0),
+    ),
+    dtype=np.float32,
+)
+
 
 class TestMatrixMultiplication:
     def test_python_naive(self):
@@ -207,65 +261,225 @@ class TestMatrixMultiplication:
             )  # we perform the op in-place, so for these individual tests we have to copy it because otherwise our test data gets messed up (prob. have to change this to a fixture)
             assert np.allclose(results, expected_result)
 
+    def test_python_naive_4x4(self):
+        result = multiply_vector_matrix_4x4(position, transform)
+        assert np.allclose(
+            result, [0.8071067929267883, 0.7071067690849304, 0.0, 1.0]
+        )  # positions are affected by translation
+        result = multiply_vector_matrix_4x4(normal, transform)
+        assert np.allclose(
+            result, [0.7071067929267883, 0.7071067690849304, 0.0, 0.0]
+        )  # normals are not affected by translation
+
+    def test_numpy_dot_4x4(self):
+        result = multiply_vector_matrix_np_dot(position, transform)
+        assert np.allclose(
+            result, [0.8071067929267883, 0.7071067690849304, 0.0, 1.0]
+        )  # positions are affected by translation
+        result = multiply_vector_matrix_np_dot(normal, transform)
+        assert np.allclose(
+            result, [0.7071067929267883, 0.7071067690849304, 0.0, 0.0]
+        )  # normals are not affected by translation
+
 
 if __name__ == "__main__":
-
-    # input values used for the tests we measure with timeit
+    # timeit needs global variables
     vector = np.array([1, 0, 0], dtype=np.float32)
     matrix = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]], dtype=np.float32)
-
-    # number of vectors to use for native implementations / per vector functions (will be multiplied by 100_000)
-    sizes = (1, 2, 5, 10)
-
-    # number of vectors to use for vectorized numpy implementations (will be multiplied by 100_000)
-    vsizes = (1, 2, 5, 10, 20, 50, 100)
-
-    # number of times to measure vectorized implementations (elapsed time will be averaged)
-    repeats = 5
-
-    # width of the first column
-    width = 50
-
-    # print header
-    print()
-    print(f"{'function':{width}s},  seconds elapsed (lower is better)")
-    print(
-        f"{'number of vectors':{width}s},{','.join(f'{str(s * 100_000):>8s}' for s in vsizes)}"
+    vector4 = np.array([1, 0, 0, 0], dtype=np.float32)
+    matrix4 = np.array(
+        [[0, 1, 0, 0], [-1, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], dtype=np.float32
     )
 
-    # measure the performance of the naive / per vector functions
-    for function in (
-        multiply_matrix_vector,
-        multiply_matrix_vector_comprehension,
-        multiply_matrix_vector_np_dot,
-    ):
-        print(f"\n{function.__name__:{width}s},", end="")
+    def vec3_timings():
+        # number of vectors to use for native implementations / per vector functions (will be multiplied by 100_000)
+        sizes = (1, 2, 5, 10)
 
-        for factor in sizes:
-            ops = factor * 100_000
+        # number of vectors to use for vectorized numpy implementations (will be multiplied by 100_000)
+        vsizes = (1, 2, 5, 10, 20, 50, 100)
 
-            timer = Timer(f"{function.__name__}(matrix, vector)", globals=globals())
-            t = timer.timeit(ops)
-            print(f"{t:8.4f},", end="")
+        # number of times to measure vectorized implementations (elapsed time will be averaged)
+        repeats = 5
 
-    # measure the performance of the vectorized functions
-    for function in (
-        multiply_matrix_vector_array_np_dot,
-        multiply_matrix_vector_array_np_einsum,
-        multiply_vector_matrix_array_np_dot_in_place,
-    ):
-        print(f"\n{function.__name__:{width}s},", end="")
+        # width of the first column
+        width = 50
+
+        # print header
+        print("\n3x3 timings")
+        print(f"{'function':{width}s},  seconds elapsed (lower is better)")
+        print(
+            f"{'number of vectors':{width}s},{','.join(f'{str(s * 100_000):>8s}' for s in vsizes)}"
+        )
+
+        # measure the performance of the naive / per vector functions
+        for function in (
+            multiply_matrix_vector,
+            multiply_matrix_vector_comprehension,
+            multiply_matrix_vector_np_dot,
+        ):
+            print(f"\n{function.__name__:{width}s},", end="")
+
+            for factor in sizes:
+                ops = factor * 100_000
+
+                timer = Timer(f"{function.__name__}(matrix, vector)", globals=globals())
+                t = timer.timeit(ops)
+                print(f"{t:8.4f},", end="")
+
+        # measure the performance of the vectorized functions
+        for function in (
+            multiply_matrix_vector_array_np_dot,
+            multiply_matrix_vector_array_np_einsum,
+            multiply_vector_matrix_array_np_dot_in_place,
+        ):
+            print(f"\n{function.__name__:{width}s},", end="")
+
+            for factor in vsizes:
+                ops = factor * 100_000
+
+                t = 0.0
+                for r in range(repeats):
+                    vectors = np.random.random(3 * ops).reshape(-1, 3)
+
+                    start = time()
+                    function(matrix, vectors)
+                    t += time() - start
+                print(f"{t / repeats:8.4f},", end="")
+
+        print("\n")
+
+    def vec4_timings():
+        # number of vectors to use for native implementations / per vector functions (will be multiplied by 100_000)
+        sizes = (1, 2, 5, 10)
+
+        # number of vectors to use for vectorized numpy implementations (will be multiplied by 100_000)
+        vsizes = (1, 2, 5, 10, 20, 50, 100)
+
+        # number of times to measure vectorized implementations (elapsed time will be averaged)
+        repeats = 5
+
+        # width of the first column
+        width = 50
+
+        # print header
+        print("\n4x4 timings")
+        print(f"{'function':{width}s},  seconds elapsed (lower is better)")
+        print(
+            f"{'number of vectors':{width}s},{','.join(f'{str(s * 100_000):>8s}' for s in vsizes)}"
+        )
+
+        # measure the performance of the naive / per vector functions
+        for function in (
+            multiply_vector_matrix_4x4,
+            multiply_vector_matrix_comprehension_4x4,
+            multiply_vector_matrix_np_dot,
+        ):
+            print(f"\n{function.__name__:{width}s},", end="")
+
+            for factor in sizes:
+                ops = factor * 100_000
+
+                timer = Timer(
+                    f"{function.__name__}(vector4, matrix4)", globals=globals()
+                )
+                t = timer.timeit(ops)
+                print(f"{t:8.4f},", end="")
+
+        # measure the performance of the vectorized functions
+        for function in (
+            multiply_matrix_vector_array_np_dot,
+            multiply_matrix_vector_array_np_einsum,
+            multiply_vector_matrix_array_np_dot_in_place,
+        ):
+            print(f"\n{function.__name__:{width}s},", end="")
+
+            for factor in vsizes:
+                ops = factor * 100_000
+
+                t = 0.0
+                for r in range(repeats):
+                    vectors = np.random.random(4 * ops).reshape(-1, 4)
+
+                    start = time()
+                    function(matrix4, vectors)
+                    t += time() - start
+                print(f"{t / repeats:8.4f},", end="")
+
+        print("\n")
+
+    def dot_timings():
+        vsizes = (1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000)
+
+        # number of times to measure vectorized implementations (elapsed time will be averaged)
+        repeats = 5
+
+        # width of the first column
+        width = 50
+
+        # # print header
+        # print("\n4x4 timings")
+        # print(f"{'function':{width}s},  seconds elapsed (lower is better)")
+        # print(
+        #     f"{'number of vectors':{width}s},{','.join(f'{str(s * 100_000):>10s}' for s in vsizes)}"
+        # )
+
+        # print(f"\n{'np.dot 3x3 individual':{width}s},", end="")
+
+        # for factor in vsizes:
+        #     ops = factor * 100_000
+
+        #     timer = Timer(
+        #         "np.dot(vector, matrix)", globals=globals()
+        #     )
+        #     t = timer.timeit(ops)
+        #     print(f"{t:10.5f},", end="")
+
+        # print(f"\n{'np.dot 4x4 individual':{width}s},", end="")
+
+        # for factor in vsizes:
+        #     ops = factor * 100_000
+
+        #     timer = Timer(
+        #         "np.dot(vector4, matrix4)", globals=globals()
+        #     )
+        #     t = timer.timeit(ops)
+        #     print(f"{t:10.5f},", end="")
+
+        # print(f"\n{'np.dot 3x3 array':{width}s},", end="")
+
+        # global vector3array
+
+        # for factor in vsizes:
+        #     ops = factor * 100_000
+
+        #     vector3array = np.random.random(3 * ops).reshape(-1, 3)
+
+        #     timer = Timer(
+        #         "np.dot(vector3array, matrix)", globals=globals()
+        #     )
+        #     t = timer.timeit(repeats)
+        #     print(f"{t:10.5f},", end="")
+
+        # print(f"\n{'np.dot 4x4 array':{width}s},", end="")
+
+        global vector4array
 
         for factor in vsizes:
             ops = factor * 100_000
 
-            t = 0.0
-            for r in range(repeats):
-                vectors = np.random.random(3 * ops).reshape(-1, 3)
+            vector4array = np.random.random(4 * ops).reshape(-1, 4)
 
-                start = time()
-                function(matrix, vectors)
-                t += time() - start
-            print(f"{t / repeats:8.4f},", end="")
+            timer = Timer(
+                "np.dot(vector4array, matrix4)", globals=globals()
+            )
+            t = timer.timeit(repeats)
+            print(f"{t:10.5f},", end="")
 
-    print("\n")
+        print("\n")
+
+
+    # vec3_timings()
+    # vec4_timings()
+
+    dot_timings()
+    
