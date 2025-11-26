@@ -3,7 +3,9 @@
 
 # blenderaddons-ng
 
-A Visual Studio Code project to develop, test, and profile Blender add-ons
+A Visual Studio Code project to develop, test, and profile Blender add-ons.
+
+This also the spot where we develop small helper modules that are of general use, like [`blempy`](/blempy.md)
 
 ## background
 
