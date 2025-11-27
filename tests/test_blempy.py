@@ -198,7 +198,7 @@ class TestExampleSimple:
         # check that the matrix multiplication in this case is identical to a direct translation
         np.allclose(result.ndarray[:, :3], cube + [0, 0, 1])
 
-    def test_vertex_co_property_empty_mesh(self, cube):
+    def test_vertex_co_property_empty_mesh(self):
         # Create a new object and set as active
         bpy.ops.mesh.primitive_cube_add()
         obj = bpy.context.active_object
@@ -228,7 +228,7 @@ class TestExampleSimple:
         with pytest.raises(ValueError):
             test_proxy.discard()
 
-    def test_vertex_co_property_extend_no_data(self, cube):
+    def test_vertex_co_property_extend_no_data(self):
         # Create a new object and set as active
         bpy.ops.mesh.primitive_cube_add()
         obj = bpy.context.active_object
@@ -249,7 +249,7 @@ class TestExampleSimple:
         with pytest.raises(ValueError):
             test_proxy.discard()
 
-    def test_uv_layer_low_level(self, cube):
+    def test_uv_layer_low_level(self):
         bpy.ops.mesh.primitive_cube_add()
         obj = bpy.context.active_object
 
@@ -259,11 +259,11 @@ class TestExampleSimple:
         )
 
         assert uv_proxy is not None
-        # a cube has 6 faces
-        assert uv_proxy.loop_start.ndarray.shape == (6,1)
-        assert uv_proxy.loop_total.ndarray.shape == (6,1)
+        # a cube has 6 faces and indices are stored as flattened arrays
+        assert uv_proxy.loop_start.ndarray.shape == (6, )
+        assert uv_proxy.loop_total.ndarray.shape == (6, )
         # 6 faces each have 4 loops (vertex corners)
-        assert uv_proxy.loop_attributes.ndarray.shape == (24,2)
+        assert uv_proxy.loop_attributes.ndarray.shape == (24, 2)
 
         # retrieving data again should be no problem
         uv_proxy.get()
@@ -279,11 +279,11 @@ class TestExampleSimple:
         uv_proxy.get()
         assert np.allclose(original, uv_proxy.loop_attributes.ndarray)
 
-    def test_vertex_color_layer_low_level(self, cube):
+    def test_vertex_color_layer_low_level(self):
         bpy.ops.mesh.primitive_cube_add()
         obj = bpy.context.active_object
 
-        # the primitive cube does not have a vertex color layer by default 
+        # the primitive cube does not have a vertex color layer by default
         obj.data.vertex_colors.new()
 
         vcol_proxy = blempy.LoopVectorAttributeProxy(
@@ -291,11 +291,11 @@ class TestExampleSimple:
         )
 
         assert vcol_proxy is not None
-        # a cube has 6 faces
-        assert vcol_proxy.loop_start.ndarray.shape == (6,1)
-        assert vcol_proxy.loop_total.ndarray.shape == (6,1)
+        # a cube has 6 faces and indices are stored as flattened arrays
+        assert vcol_proxy.loop_start.ndarray.shape == (6, ) 
+        assert vcol_proxy.loop_total.ndarray.shape == (6, )
         # 6 faces each have 4 loops (vertex corners) and vertex colors have 4 components
-        assert vcol_proxy.loop_attributes.ndarray.shape == (24,4)
+        assert vcol_proxy.loop_attributes.ndarray.shape == (24, 4)
 
         # a new vertex color layer is initialized to all white
         assert np.allclose(vcol_proxy.loop_attributes.ndarray, 1.0)
@@ -311,5 +311,71 @@ class TestExampleSimple:
         vcol_proxy.get()
         assert np.allclose(original, vcol_proxy.loop_attributes.ndarray)
 
+    def test_vertex_color_layer_iterator(self):
+        bpy.ops.mesh.primitive_cube_add()
+        obj = bpy.context.active_object
 
-        
+        # the primitive cube does not have a vertex color layer by default
+        obj.data.vertex_colors.new()
+
+        vcol_proxy = blempy.LoopVectorAttributeProxy(
+            obj.data, "vertex_colors.active.data", "color"
+        )
+
+        # cube has six faces
+        assert len(vcol_proxy) == 6
+
+        # test the iterator by setting all loops in each individual face to a distinct grey level
+        # this will cause the face to have a uniform color
+        for index, polygon_loops in enumerate(vcol_proxy):
+            grey_level = index / 6
+            polygon_loops[:] = [grey_level, grey_level, grey_level, 1.0]
+        vcol_proxy.set()
+
+        # deliberately copy the original array
+        # set it to None, and get them again to see if we indeed wrote them to the mesh
+        original = vcol_proxy.loop_attributes.ndarray
+        vcol_proxy.loop_attributes.ndarray = None
+        vcol_proxy.get()
+
+        # when assigning colors to a vertex color layer, Blender automatically gamma corrects those colors
+        # so what we get back is *not* what we put in. What we can check is whether the original white 
+        # values are replaced by something else
+        assert np.all((original[:,:3] != 1).ravel())
+
+    def test_color_attribute_layer_iterator(self):
+        bpy.ops.mesh.primitive_cube_add()
+        obj = bpy.context.active_object
+
+        # the primitive cube does not have a vertex color layer by default
+        obj.data.vertex_colors.new(name="ACol")
+
+        # this time we access the colors using the unified attribute layers
+        # where color attribute layers have a color_srgb attribute that will
+        # not be automatically gamma corrected (or only a little bit?)
+        vcol_proxy = blempy.LoopVectorAttributeProxy(
+            obj.data, "attributes['ACol']", "color_srgb"
+        )
+
+        # cube has six faces
+        assert len(vcol_proxy) == 6
+
+        # test the iterator by setting all loops in each individual face to a distinct grey level
+        # this will cause the face to have a uniform color
+        for index, polygon_loops in enumerate(vcol_proxy):
+            grey_level = index / 6
+            polygon_loops[:] = [grey_level, grey_level, grey_level, 1.0]
+        vcol_proxy.set()
+
+        # deliberately copy the original array
+        # set it to None, and get them again to see if we indeed wrote them to the mesh
+        original = vcol_proxy.loop_attributes.ndarray
+        vcol_proxy.loop_attributes.ndarray = None
+        vcol_proxy.get()
+
+        # this is here to check iwhat the values are if they do not match
+        # I still find it baffling that assigned values will be silently converted
+        # but that is an issue regardless of this library.
+        # for org,col in zip(original, vcol_proxy.loop_attributes.ndarray):
+        #     print(f"{org} {col}")
+        assert np.allclose(original, vcol_proxy.loop_attributes.ndarray, atol=0.01)
