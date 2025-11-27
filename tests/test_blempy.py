@@ -249,7 +249,7 @@ class TestExampleSimple:
         with pytest.raises(ValueError):
             test_proxy.discard()
 
-    def test_uv_layer(self, cube):
+    def test_uv_layer_low_level(self, cube):
         bpy.ops.mesh.primitive_cube_add()
         obj = bpy.context.active_object
 
@@ -279,6 +279,37 @@ class TestExampleSimple:
         uv_proxy.get()
         assert np.allclose(original, uv_proxy.loop_attributes.ndarray)
 
+    def test_vertex_color_layer_low_level(self, cube):
+        bpy.ops.mesh.primitive_cube_add()
+        obj = bpy.context.active_object
+
+        # the primitive cube does not have a vertex color layer by default 
+        obj.data.vertex_colors.new()
+
+        vcol_proxy = blempy.LoopVectorAttributeProxy(
+            obj.data, "vertex_colors.active.data", "color"
+        )
+
+        assert vcol_proxy is not None
+        # a cube has 6 faces
+        assert vcol_proxy.loop_start.ndarray.shape == (6,1)
+        assert vcol_proxy.loop_total.ndarray.shape == (6,1)
+        # 6 faces each have 4 loops (vertex corners) and vertex colors have 4 components
+        assert vcol_proxy.loop_attributes.ndarray.shape == (24,4)
+
+        # a new vertex color layer is initialized to all white
+        assert np.allclose(vcol_proxy.loop_attributes.ndarray, 1.0)
+
+        # set all vertex colors to red
+        vcol_proxy.loop_attributes.ndarray[:] = [1.0, 0.0, 0.0, 1.0]
+        vcol_proxy.set()
+
+        # deliberately copy the original array
+        # set it to None, and get them again to see if we indeed wrote them to the mesh
+        original = vcol_proxy.loop_attributes.ndarray
+        vcol_proxy.loop_attributes.ndarray = None
+        vcol_proxy.get()
+        assert np.allclose(original, vcol_proxy.loop_attributes.ndarray)
 
 
         
