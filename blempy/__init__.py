@@ -1,4 +1,4 @@
-from bpy.types import ID
+from bpy.types import ID, Mesh
 import numpy as np
 
 """
@@ -46,7 +46,9 @@ class PropertyCollectionAttributeProxy:
         property_collection = getattr(self.object, self.property_collection)
         items = len(property_collection)
         if items:
-            length = len(getattr(property_collection[0], self.atttribute))
+            attr = getattr(property_collection[0], self.atttribute)
+            # check if this attribute is a scalar
+            length = len(attr) if hasattr(attr, "__len__") else 1
             # if we haven't allocated an array yet or its shape has changed, we allocate one
             if self.ndarray is None or items != self.items or length != self.length:
                 self.ndarray = np.empty(items * length, dtype=np.float32)
@@ -71,7 +73,10 @@ class PropertyCollectionAttributeProxy:
         if not len(property_collection):
             raise ValueError("empty property collection")
 
-        length = len(getattr(property_collection[0], self.atttribute))
+        attr = getattr(property_collection[0], self.atttribute)
+        # check if this attribute is a scalar
+        length = len(attr) if hasattr(attr, "__len__") else 1
+        
         if length != self.length:
             raise ValueError("vector length does not match length of property attribute")
         
@@ -147,3 +152,42 @@ class VectorCollectionProxy(PropertyCollectionAttributeProxy):
     def __matmul__(self, matrix):
         np.dot(self.ndarray, matrix)
         return self
+
+# import bpy
+
+# me = bpy.context.object.data
+# uv_layer = me.uv_layers.active.data
+
+# for poly in me.polygons:
+#     print("Polygon index: {:d}, length: {:d}".format(poly.index, poly.loop_total))
+
+#     # Range is used here to show how the polygons reference loops,
+#     # for convenience 'poly.loop_indices' can be used instead.
+#     for loop_index in range(poly.loop_start, poly.loop_start + poly.loop_total):
+#         print("    Vertex: {:d}".format(me.loops[loop_index].vertex_index))
+#         print("    UV: {!r}".format(uv_layer[loop_index].uv))
+
+def getattrs(obj, attrs:str):
+    individual_attributes = attrs.split(".")
+    for attr in individual_attributes[:-1]:  # all but the last one
+        obj = getattr(obj, attr)
+    return obj,individual_attributes[-1]
+       
+class LoopVectorAttributeProxy:
+    def __init__(self, mesh: Mesh, loop_layer, property_collection: str) -> None:
+        self.loop_start = PropertyCollectionAttributeProxy(mesh, "polygons", "loop_start")
+        self.loop_start.get()
+        self.loop_total = PropertyCollectionAttributeProxy(mesh, "polygons", "loop_total")
+        self.loop_total.get()
+
+        self.loop_attributes = VectorCollectionProxy(*getattrs(mesh, loop_layer), property_collection)
+        self.loop_attributes.get()
+
+    def get(self):
+        self.loop_start.get()
+        self.loop_total.get()
+        self.loop_attributes.get()
+
+    def set(self):
+        self.loop_attributes.set()
+        
