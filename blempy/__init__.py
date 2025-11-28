@@ -1,4 +1,4 @@
-from bpy.types import ID, Mesh
+from bpy.types import ID, Mesh, Attribute
 import numpy as np
 
 """
@@ -197,7 +197,7 @@ class LoopVectorAttributeProxy:
         Initialize an attribute proxy for attributes associated with a loop layer.
 
         Loop layer attributes like uv coordinates or vertex colors are always associated
-        with the loops (face corners) of mesh polygons (faces) and each polygon has attributes that 
+        with the loops (face corners) of mesh polygons (faces) and each polygon has attributes that
         point to the start and end indices of the loops associated with that face.
 
         This class takes care of retrieving those indices as well as the loop layer attributes
@@ -265,3 +265,101 @@ class LoopVectorAttributeProxy:
 
     def __len__(self):
         return self.loop_start.items
+
+
+class AttributeProxy:
+    default_attribute = {"BYTE_COLOR": "color", "FLOAT_COLOR": "color"}
+
+    def __init__(self, mesh: Mesh, name: str, attr: str | None = None) -> None:
+        """
+        Initialize an attribute proxy for a unified attribute layer.
+
+        Currently supports loop layer (a.k.a. face corner) attributes only.
+
+        :param mesh: a bpy.types.Mesh
+        :param name: the given name of the property collection (e.g. "Col" or "UVMap")
+        :param attribute: the name of the attribute (e.g. "color", for vertex colors)
+
+        if the attr is None, a default is selected (color for vertex color layers, vector for others)
+        """
+        if name not in mesh.attributes.keys():
+            raise ValueError(f"unknown property collection {name}")
+
+        collection: Attribute = mesh.attributes[name]
+        self.data_type = collection.data_type
+        self.storage_type = (
+            collection.storage_type if hasattr(collection, "storage_type") else "ARRAY"
+        )  # versions prior to Blender 5.0 don´t have this attribute
+        self.domain = collection.domain
+
+        if attr is None:
+            attr = self.default_attribute.get(self.data_type, "vector")
+                
+        if not hasattr(collection.data[0], attr):
+            raise ValueError(f"property {name} does not have an attribute {attr}")
+
+        if self.domain not in {"CORNER"}:
+            raise NotImplementedError(
+                f"cannot create a proxy yet for attributes in domain {self.domain}"
+            )
+
+        if self.storage_type not in {"ARRAY"}:
+            raise NotImplementedError(
+                f"cannot create a proxy yet for attributes with storage type {self.storage_type}"
+            )
+
+        self.name = name
+        self.attr = attr
+
+        match self.domain:
+            case "CORNER":
+                self.loop_start = PropertyCollectionAttributeProxy(
+                    mesh, "polygons", "loop_start"
+                )
+                self.loop_start.get()
+                self.loop_total = PropertyCollectionAttributeProxy(
+                    mesh, "polygons", "loop_total"
+                )
+                self.loop_total.get()
+                self.loop_attributes = VectorCollectionProxy(
+                    *getattrs(mesh, f"attributes['{name}']"), attr
+                )
+                self.loop_attributes.get()
+            case _:
+                self.loop_start = None
+                self.loop_total = None
+                self.loop_attributes = None
+
+    def get(self):
+        self.loop_start.get()
+        self.loop_total.get()
+        self.loop_attributes.get()
+
+    def set(self):
+        self.loop_attributes.set()
+
+    def __iter__(self):
+        self.polygon = 0
+        return self
+
+    def __next__(self):
+        polygon = self.polygon
+        self.polygon += 1
+        if polygon >= self.loop_start.items:
+            raise StopIteration
+        start = self.loop_start.ndarray[polygon]
+        end = start + self.loop_total.ndarray[polygon]
+        return self.loop_attributes.ndarray[start:end]
+
+    def __len__(self):
+        return self.loop_start.items
+
+    def __getitem__(self, key):
+        start = self.loop_start.ndarray[key]
+        end = start + self.loop_total.ndarray[key]
+        return self.loop_attributes.ndarray[start:end]
+
+    def __setitem__(self, key, value):
+        start = self.loop_start.ndarray[key]
+        end = start + self.loop_total.ndarray[key]
+        self.loop_attributes.ndarray[start:end] = value

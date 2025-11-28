@@ -379,3 +379,88 @@ class TestExampleSimple:
         # for org,col in zip(original, vcol_proxy.loop_attributes.ndarray):
         #     print(f"{org} {col}")
         assert np.allclose(original, vcol_proxy.loop_attributes.ndarray, atol=0.01)
+
+    def test_unified_attribute_color(self):
+        bpy.ops.mesh.primitive_cube_add()
+        obj = bpy.context.active_object
+
+        # the primitive cube does not have a vertex color layer by default
+        # so we add it using the old styl vertex_colors (but this will
+        # show up in the unified attributes)
+        obj.data.vertex_colors.new(name="ACol")
+
+        # first a few negatives
+        with pytest.raises(ValueError, match="unknown property"):
+            proxy = blempy.AttributeProxy(obj.data, "UNKNOWN", "color_srgb")    
+        with pytest.raises(ValueError, match="does not have an attribute"):
+            proxy = blempy.AttributeProxy(obj.data, "ACol", "UNKNWON")    
+
+        proxy = blempy.AttributeProxy(obj.data, "ACol", "color_srgb")
+
+        # cube has six faces
+        assert len(proxy) == 6
+
+        # test the iterator by setting all loops in each individual face to a distinct grey level
+        # this will cause the face to have a uniform color
+        for index, polygon_loops in enumerate(proxy):
+            grey_level = index / 6
+            polygon_loops[:] = [grey_level, grey_level, grey_level, 1.0]
+        proxy.set()
+
+        # deliberately copy the original array
+        # set it to None, and get them again to see if we indeed wrote them to the mesh
+        original = proxy.loop_attributes.ndarray
+        proxy.loop_attributes.ndarray = None
+        proxy.get()
+
+        # this is here to check iwhat the values are if they do not match
+        # I still find it baffling that assigned values will be silently converted
+        # but that is an issue regardless of this library.
+        # for org,col in zip(original, vcol_proxy.loop_attributes.ndarray):
+        #     print(f"{org} {col}")
+        assert np.allclose(original, proxy.loop_attributes.ndarray, atol=0.01)
+
+    def test_unified_attribute_uvmap(self):
+        bpy.ops.mesh.primitive_plane_add()
+        obj = bpy.context.active_object
+
+        # the primitive plane has a uv map by default
+        # we don´t specify an attribute in the proxy constructor so it should give us the default (i.e. vector)
+        proxy = blempy.AttributeProxy(obj.data, "UVMap")
+        assert proxy.attr == "vector"
+
+        # a plane has a single face
+        assert len(proxy) == 1
+
+        proxy.get()
+
+        # get the first (and only) set of uv-coordinates
+        uv_coordinates = proxy[0]  
+        np.allclose(uv_coordinates, [[0,0],[1,0],[1,1],[0,1]])
+
+        # scale them by a half and write back
+        # uv_coordinates is a view, so no need to store it explicitly in the proxy
+        uv_coordinates *= 0.5
+        proxy.set()
+
+        # force reload from mesh to check if put succeeded
+        proxy.loop_attributes.ndarray = None
+        proxy.get()
+
+        uv_coordinates = proxy[0]  
+        np.allclose(uv_coordinates, [[0,0],[.5,0],[.5, .5],[0,.5]])
+
+        # cannot assign to a non existing face
+        with pytest.raises(IndexError):
+            proxy[1] = 0
+
+        # but we can to an existing one (numpy will take care of converting the python list)
+        proxy[0] = [[0,0],[1,0],[1,1],[0,1]]
+
+        # force reload from mesh to check if put succeeded
+        proxy.loop_attributes.ndarray = None
+        proxy.get()
+
+        uv_coordinates = proxy[0]  
+        np.allclose(uv_coordinates, [[0,0],[1,0],[1,1],[0,1]])
+
