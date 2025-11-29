@@ -268,9 +268,25 @@ class LoopVectorAttributeProxy:
 
 
 class AttributeProxy:
-    default_attribute = {"BYTE_COLOR": "color", "FLOAT_COLOR": "color"}
+    default_attribute = {
+        "BYTE_COLOR": "color",
+        "FLOAT_COLOR": "color",
+        "FLOAT": "value",
+        "INT": "value",
+        "BOOLEAN": "value",
+        "FLOAT_VECTOR": "vector",
+        "QUATERNION": "vector",
+        "FLOAT4X4": "value",
+        "STRING": "value",
+        "INT8": "value",
+        "INT16_2D": "vector",
+        "INT32_2D": "vector",
+        "FLOAT2": "vector",
+    }
 
-    def __init__(self, mesh: Mesh, name: str, attr: str | None = None) -> None:
+    def __init__(
+        self, mesh: Mesh, name: str | int | Attribute, attr: str | None = None
+    ) -> None:
         """
         Initialize an attribute proxy for a unified attribute layer.
 
@@ -282,10 +298,27 @@ class AttributeProxy:
 
         if the attr is None, a default is selected (color for vertex color layers, vector for others)
         """
-        if name not in mesh.attributes.keys():
-            raise ValueError(f"unknown property collection {name}")
 
-        collection: Attribute = mesh.attributes[name]
+        if isinstance(name, str):
+            if name not in mesh.attributes.keys():
+                raise ValueError(f"unknown property collection {name}")
+            collection: Attribute = mesh.attributes[name]
+        elif isinstance(name, int):
+            try:
+                collection: Attribute = mesh.attributes[name]
+            except IndexError:
+                raise ValueError(f"unknown property index {name}")
+            name = collection.name
+        elif isinstance(name, Attribute):
+            collection = name
+            if attr is not None:
+                raise ValueError(
+                    "attr argument must be None when name argument is a Attribute instance"
+                )
+            name = collection.name
+        else:  #pragma: nocover
+            raise TypeError("name argument must be a str, int, or Attribute instance")
+
         self.data_type = collection.data_type
         self.storage_type = (
             collection.storage_type if hasattr(collection, "storage_type") else "ARRAY"
@@ -293,8 +326,8 @@ class AttributeProxy:
         self.domain = collection.domain
 
         if attr is None:
-            attr = self.default_attribute.get(self.data_type, "vector")
-                
+            attr = self.default_attribute.get(self.data_type, "value")
+
         if not hasattr(collection.data[0], attr):
             raise ValueError(f"property {name} does not have an attribute {attr}")
 

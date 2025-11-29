@@ -464,3 +464,29 @@ class TestExampleSimple:
         uv_coordinates = proxy[0]  
         np.allclose(uv_coordinates, [[0,0],[1,0],[1,1],[0,1]])
 
+    def test_unified_attribute_alternates(self):
+        bpy.ops.mesh.primitive_plane_add()
+        obj = bpy.context.active_object
+
+        # the primitive plane has a uv map by default
+        proxy = blempy.AttributeProxy(obj.data, "UVMap")
+        # but non-existing names raise an error
+        with pytest.raises(ValueError):
+            proxy = blempy.AttributeProxy(obj.data, "Can I haz cheezeburger?")
+
+        # using an index is ok too, but we don´t know the index of the default UVMap so we figure it out first before we use that index to test
+        for i,attribute in enumerate(obj.data.attributes):
+            if attribute.name == "UVMap":
+                proxy = blempy.AttributeProxy(obj.data, i)
+                break
+        # a non existing index is not ok
+        with pytest.raises(ValueError):
+            proxy = blempy.AttributeProxy(obj.data, 120)
+
+        # an Attribute reference should be fine as well
+        proxy = blempy.AttributeProxy(obj.data, obj.data.attributes["UVMap"])
+
+        # but in that case we are not allowed to pass an attribute name
+        with pytest.raises(ValueError):
+            proxy = blempy.AttributeProxy(obj.data, obj.data.attributes["UVMap"], "UVMap")
+

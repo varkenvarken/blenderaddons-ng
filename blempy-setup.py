@@ -7,7 +7,7 @@ long_description = (this_directory / "blempy.md").read_text()
 
 setup(
     name="blempy",
-    version="0.2.0",
+    version="0.3.0",
     description="Easy and fast access to Blender attributes",
     long_description=long_description,
     long_description_content_type="text/markdown",
