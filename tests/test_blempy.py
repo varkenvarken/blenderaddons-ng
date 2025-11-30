@@ -260,8 +260,8 @@ class TestExampleSimple:
 
         assert uv_proxy is not None
         # a cube has 6 faces and indices are stored as flattened arrays
-        assert uv_proxy.loop_start.ndarray.shape == (6, )
-        assert uv_proxy.loop_total.ndarray.shape == (6, )
+        assert uv_proxy.loop_start.ndarray.shape == (6,)
+        assert uv_proxy.loop_total.ndarray.shape == (6,)
         # 6 faces each have 4 loops (vertex corners)
         assert uv_proxy.loop_attributes.ndarray.shape == (24, 2)
 
@@ -292,8 +292,8 @@ class TestExampleSimple:
 
         assert vcol_proxy is not None
         # a cube has 6 faces and indices are stored as flattened arrays
-        assert vcol_proxy.loop_start.ndarray.shape == (6, ) 
-        assert vcol_proxy.loop_total.ndarray.shape == (6, )
+        assert vcol_proxy.loop_start.ndarray.shape == (6,)
+        assert vcol_proxy.loop_total.ndarray.shape == (6,)
         # 6 faces each have 4 loops (vertex corners) and vertex colors have 4 components
         assert vcol_proxy.loop_attributes.ndarray.shape == (24, 4)
 
@@ -339,9 +339,9 @@ class TestExampleSimple:
         vcol_proxy.get()
 
         # when assigning colors to a vertex color layer, Blender automatically gamma corrects those colors
-        # so what we get back is *not* what we put in. What we can check is whether the original white 
+        # so what we get back is *not* what we put in. What we can check is whether the original white
         # values are replaced by something else
-        assert np.all((original[:,:3] != 1).ravel())
+        assert np.all((original[:, :3] != 1).ravel())
 
     def test_color_attribute_layer_iterator(self):
         bpy.ops.mesh.primitive_cube_add()
@@ -391,9 +391,9 @@ class TestExampleSimple:
 
         # first a few negatives
         with pytest.raises(ValueError, match="unknown property"):
-            proxy = blempy.AttributeProxy(obj.data, "UNKNOWN", "color_srgb")    
+            proxy = blempy.AttributeProxy(obj.data, "UNKNOWN", "color_srgb")
         with pytest.raises(ValueError, match="does not have an attribute"):
-            proxy = blempy.AttributeProxy(obj.data, "ACol", "UNKNWON")    
+            proxy = blempy.AttributeProxy(obj.data, "ACol", "UNKNWON")
 
         proxy = blempy.AttributeProxy(obj.data, "ACol", "color_srgb")
 
@@ -435,8 +435,8 @@ class TestExampleSimple:
         proxy.get()
 
         # get the first (and only) set of uv-coordinates
-        uv_coordinates = proxy[0]  
-        np.allclose(uv_coordinates, [[0,0],[1,0],[1,1],[0,1]])
+        uv_coordinates = proxy[0]
+        np.allclose(uv_coordinates, [[0, 0], [1, 0], [1, 1], [0, 1]])
 
         # scale them by a half and write back
         # uv_coordinates is a view, so no need to store it explicitly in the proxy
@@ -447,22 +447,22 @@ class TestExampleSimple:
         proxy.loop_attributes.ndarray = None
         proxy.get()
 
-        uv_coordinates = proxy[0]  
-        np.allclose(uv_coordinates, [[0,0],[.5,0],[.5, .5],[0,.5]])
+        uv_coordinates = proxy[0]
+        np.allclose(uv_coordinates, [[0, 0], [0.5, 0], [0.5, 0.5], [0, 0.5]])
 
         # cannot assign to a non existing face
         with pytest.raises(IndexError):
             proxy[1] = 0
 
         # but we can to an existing one (numpy will take care of converting the python list)
-        proxy[0] = [[0,0],[1,0],[1,1],[0,1]]
+        proxy[0] = [[0, 0], [1, 0], [1, 1], [0, 1]]
 
         # force reload from mesh to check if put succeeded
         proxy.loop_attributes.ndarray = None
         proxy.get()
 
-        uv_coordinates = proxy[0]  
-        np.allclose(uv_coordinates, [[0,0],[1,0],[1,1],[0,1]])
+        uv_coordinates = proxy[0]
+        np.allclose(uv_coordinates, [[0, 0], [1, 0], [1, 1], [0, 1]])
 
     def test_unified_attribute_alternates(self):
         bpy.ops.mesh.primitive_plane_add()
@@ -475,7 +475,7 @@ class TestExampleSimple:
             proxy = blempy.AttributeProxy(obj.data, "Can I haz cheezeburger?")
 
         # using an index is ok too, but we don´t know the index of the default UVMap so we figure it out first before we use that index to test
-        for i,attribute in enumerate(obj.data.attributes):
+        for i, attribute in enumerate(obj.data.attributes):
             if attribute.name == "UVMap":
                 proxy = blempy.AttributeProxy(obj.data, i)
                 break
@@ -488,5 +488,78 @@ class TestExampleSimple:
 
         # but in that case we are not allowed to pass an attribute name
         with pytest.raises(ValueError):
-            proxy = blempy.AttributeProxy(obj.data, obj.data.attributes["UVMap"], "UVMap")
+            proxy = blempy.AttributeProxy(
+                obj.data, obj.data.attributes["UVMap"], "UVMap"
+            )
 
+    def test_unified_attribute_edge_crease(self):
+        bpy.ops.mesh.primitive_cube_add()
+        obj = bpy.context.active_object
+
+        # quick way to add an edge crease layer to a mesh
+        obj.data.edge_creases_ensure()
+
+        # the default name is crease-edge
+        proxy = blempy.AttributeProxy(obj.data, "crease_edge")
+
+        proxy.get()
+
+        for edge_attribute in proxy:
+            edge_attribute[:] = 1.0
+        
+        proxy.set()
+
+        # deliberately copy the original array
+        # set it to None, and get them again to see if we indeed wrote them to the mesh
+        original = proxy.loop_attributes.ndarray
+        proxy.loop_attributes.ndarray = None
+        proxy.get()
+        assert np.allclose(original, proxy.loop_attributes.ndarray)
+
+    def test_unified_attribute_vertex_crease(self):
+        bpy.ops.mesh.primitive_cube_add()
+        obj = bpy.context.active_object
+
+        # quick way to add an vertex crease layer to a mesh
+        obj.data.vertex_creases_ensure()
+
+        # the default name is crease_vert
+        proxy = blempy.AttributeProxy(obj.data, "crease_vert")
+
+        proxy.get()
+
+        for vertex_attribute in proxy:
+            vertex_attribute[:] = 1.0
+        
+        proxy.set()
+
+        # deliberately copy the original array
+        # set it to None, and get them again to see if we indeed wrote them to the mesh
+        original = proxy.loop_attributes.ndarray
+        proxy.loop_attributes.ndarray = None
+        proxy.get()
+        assert np.allclose(original, proxy.loop_attributes.ndarray)
+
+    def test_unified_attribute_face(self):
+        bpy.ops.mesh.primitive_cube_add()
+        obj = bpy.context.active_object
+
+        # there are by default no face attribute layers so create one from scratch
+        obj.data.attributes.new(name="oink", type="FLOAT", domain="FACE")
+
+        # the default name is crease_vert
+        proxy = blempy.AttributeProxy(obj.data, "oink")
+
+        proxy.get()
+
+        for vertex_attribute in proxy:
+            vertex_attribute[:] = 1.0
+        
+        proxy.set()
+
+        # deliberately copy the original array
+        # set it to None, and get them again to see if we indeed wrote them to the mesh
+        original = proxy.loop_attributes.ndarray
+        proxy.loop_attributes.ndarray = None
+        proxy.get()
+        assert np.allclose(original, proxy.loop_attributes.ndarray)

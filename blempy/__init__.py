@@ -316,7 +316,7 @@ class AttributeProxy:
                     "attr argument must be None when name argument is a Attribute instance"
                 )
             name = collection.name
-        else:  #pragma: nocover
+        else:  # pragma: nocover
             raise TypeError("name argument must be a str, int, or Attribute instance")
 
         self.data_type = collection.data_type
@@ -331,7 +331,7 @@ class AttributeProxy:
         if not hasattr(collection.data[0], attr):
             raise ValueError(f"property {name} does not have an attribute {attr}")
 
-        if self.domain not in {"CORNER"}:
+        if self.domain not in {"CORNER", "FACE", "EDGE", "POINT"}:
             raise NotImplementedError(
                 f"cannot create a proxy yet for attributes in domain {self.domain}"
             )
@@ -358,41 +358,62 @@ class AttributeProxy:
                     *getattrs(mesh, f"attributes['{name}']"), attr
                 )
                 self.loop_attributes.get()
+            case "FACE" | "EDGE" | "POINT":
+                self.loop_attributes = VectorCollectionProxy(
+                    *getattrs(mesh, f"attributes['{name}']"), attr
+                )
+                self.loop_attributes.get()
             case _:
                 self.loop_start = None
                 self.loop_total = None
                 self.loop_attributes = None
 
     def get(self):
-        self.loop_start.get()
-        self.loop_total.get()
+        if self.domain == "CORNER":
+            self.loop_start.get()
+            self.loop_total.get()
         self.loop_attributes.get()
 
     def set(self):
         self.loop_attributes.set()
 
     def __iter__(self):
-        self.polygon = 0
+        self._index = 0
         return self
 
     def __next__(self):
-        polygon = self.polygon
-        self.polygon += 1
-        if polygon >= self.loop_start.items:
-            raise StopIteration
-        start = self.loop_start.ndarray[polygon]
-        end = start + self.loop_total.ndarray[polygon]
-        return self.loop_attributes.ndarray[start:end]
+        polygon = self._index
+        self._index += 1
+        if self.domain == "CORNER":
+            if polygon >= self.loop_start.items:
+                raise StopIteration
+            start = self.loop_start.ndarray[polygon]
+            end = start + self.loop_total.ndarray[polygon]
+            return self.loop_attributes.ndarray[start:end]
+        else:
+            if polygon >= self.loop_attributes.items:
+                raise StopIteration
+            return self.loop_attributes.ndarray[
+                polygon : polygon + 1
+            ]  # need to return a reference, not just the value
 
     def __len__(self):
-        return self.loop_start.items
+        if self.domain == "CORNER":
+            return self.loop_start.items
+        return self.loop_attributes.items
 
     def __getitem__(self, key):
-        start = self.loop_start.ndarray[key]
-        end = start + self.loop_total.ndarray[key]
-        return self.loop_attributes.ndarray[start:end]
+        if self.domain == "CORNER":
+            start = self.loop_start.ndarray[key]
+            end = start + self.loop_total.ndarray[key]
+            return self.loop_attributes.ndarray[start:end]
+        else:
+            return self.loop_attributes.ndarray[key]
 
     def __setitem__(self, key, value):
-        start = self.loop_start.ndarray[key]
-        end = start + self.loop_total.ndarray[key]
-        self.loop_attributes.ndarray[start:end] = value
+        if self.domain == "CORNER":
+            start = self.loop_start.ndarray[key]
+            end = start + self.loop_total.ndarray[key]
+            self.loop_attributes.ndarray[start:end] = value
+        else:
+            self.loop_attributes.ndarray[key] = value
