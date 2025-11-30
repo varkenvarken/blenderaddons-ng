@@ -249,6 +249,60 @@ class TestExampleSimple:
         with pytest.raises(ValueError):
             test_proxy.discard()
 
+    def test_face_area_property(self, cube):
+        # Create a new object and set as active
+        bpy.ops.mesh.primitive_cube_add()
+        obj = bpy.context.active_object
+
+        test_proxy = blempy.VectorCollectionProxy(obj.data, "polygons", "area")
+        test_proxy.get()
+
+        # the primitive cube has 6 faces
+        assert test_proxy.items == 6
+        assert (
+            test_proxy.length == 1
+        )  # area is a scalar, so i n this case dimension should be 1
+        assert test_proxy.ndarray.dtype == np.float32
+        assert np.allclose(
+            test_proxy.ndarray, 4
+        )  # default cube has edge lengths of 2, so area = 2 x 2
+
+        assert test_proxy[0] == 4
+
+        test_proxy[0] = 3
+        test_proxy.set()
+
+        # set it to None, and get them again to see what we actually wrote to the mesh
+        test_proxy.ndarray = None
+        test_proxy.get()
+        # since area is a read only attribute, everything should have stayed the same (but Blender won´t throw an error)
+        assert np.allclose(test_proxy.ndarray, 4)
+
+    def test_face_hide_property(self):
+        # Create a new object and set as active
+        bpy.ops.mesh.primitive_cube_add()
+        obj = bpy.context.active_object
+
+        test_proxy = blempy.VectorCollectionProxy(obj.data, "polygons", "hide")
+        test_proxy.get()
+
+        # the primitive cube has 6 faces
+        assert test_proxy.items == 6
+        assert (
+            test_proxy.length == 1
+        )  # area is a scalar, so in this case dimension should be 1
+        assert test_proxy.ndarray.dtype == bool
+        assert np.allclose(
+            test_proxy.ndarray, [False] * 6
+        )  # initially they are all visible
+
+        test_proxy[0] = True
+        test_proxy.set()
+        # set it to None, and get them again to see what we actually wrote to the mesh
+        test_proxy.ndarray = None
+        test_proxy.get()
+        assert np.allclose(test_proxy.ndarray, [True] + [False] * 5)
+
     def test_uv_layer_low_level(self):
         bpy.ops.mesh.primitive_cube_add()
         obj = bpy.context.active_object
@@ -391,11 +445,11 @@ class TestExampleSimple:
 
         # first a few negatives
         with pytest.raises(ValueError, match="unknown property"):
-            proxy = blempy.AttributeProxy(obj.data, "UNKNOWN", "color_srgb")
+            proxy = blempy.UnifiedAttributeProxy(obj.data, "UNKNOWN", "color_srgb")
         with pytest.raises(ValueError, match="does not have an attribute"):
-            proxy = blempy.AttributeProxy(obj.data, "ACol", "UNKNWON")
+            proxy = blempy.UnifiedAttributeProxy(obj.data, "ACol", "UNKNWON")
 
-        proxy = blempy.AttributeProxy(obj.data, "ACol", "color_srgb")
+        proxy = blempy.UnifiedAttributeProxy(obj.data, "ACol", "color_srgb")
 
         # cube has six faces
         assert len(proxy) == 6
@@ -426,7 +480,7 @@ class TestExampleSimple:
 
         # the primitive plane has a uv map by default
         # we don´t specify an attribute in the proxy constructor so it should give us the default (i.e. vector)
-        proxy = blempy.AttributeProxy(obj.data, "UVMap")
+        proxy = blempy.UnifiedAttributeProxy(obj.data, "UVMap")
         assert proxy.attr == "vector"
 
         # a plane has a single face
@@ -469,26 +523,26 @@ class TestExampleSimple:
         obj = bpy.context.active_object
 
         # the primitive plane has a uv map by default
-        proxy = blempy.AttributeProxy(obj.data, "UVMap")
+        proxy = blempy.UnifiedAttributeProxy(obj.data, "UVMap")
         # but non-existing names raise an error
         with pytest.raises(ValueError):
-            proxy = blempy.AttributeProxy(obj.data, "Can I haz cheezeburger?")
+            proxy = blempy.UnifiedAttributeProxy(obj.data, "Can I haz cheezeburger?")
 
         # using an index is ok too, but we don´t know the index of the default UVMap so we figure it out first before we use that index to test
         for i, attribute in enumerate(obj.data.attributes):
             if attribute.name == "UVMap":
-                proxy = blempy.AttributeProxy(obj.data, i)
+                proxy = blempy.UnifiedAttributeProxy(obj.data, i)
                 break
         # a non existing index is not ok
         with pytest.raises(ValueError):
-            proxy = blempy.AttributeProxy(obj.data, 120)
+            proxy = blempy.UnifiedAttributeProxy(obj.data, 120)
 
         # an Attribute reference should be fine as well
-        proxy = blempy.AttributeProxy(obj.data, obj.data.attributes["UVMap"])
+        proxy = blempy.UnifiedAttributeProxy(obj.data, obj.data.attributes["UVMap"])
 
         # but in that case we are not allowed to pass an attribute name
         with pytest.raises(ValueError):
-            proxy = blempy.AttributeProxy(
+            proxy = blempy.UnifiedAttributeProxy(
                 obj.data, obj.data.attributes["UVMap"], "UVMap"
             )
 
@@ -500,13 +554,13 @@ class TestExampleSimple:
         obj.data.edge_creases_ensure()
 
         # the default name is crease-edge
-        proxy = blempy.AttributeProxy(obj.data, "crease_edge")
+        proxy = blempy.UnifiedAttributeProxy(obj.data, "crease_edge")
 
         proxy.get()
 
         for edge_attribute in proxy:
             edge_attribute[:] = 1.0
-        
+
         proxy.set()
 
         # deliberately copy the original array
@@ -524,13 +578,13 @@ class TestExampleSimple:
         obj.data.vertex_creases_ensure()
 
         # the default name is crease_vert
-        proxy = blempy.AttributeProxy(obj.data, "crease_vert")
+        proxy = blempy.UnifiedAttributeProxy(obj.data, "crease_vert")
 
         proxy.get()
 
         for vertex_attribute in proxy:
             vertex_attribute[:] = 1.0
-        
+
         proxy.set()
 
         # deliberately copy the original array
@@ -548,13 +602,13 @@ class TestExampleSimple:
         obj.data.attributes.new(name="oink", type="FLOAT", domain="FACE")
 
         # the default name is crease_vert
-        proxy = blempy.AttributeProxy(obj.data, "oink")
+        proxy = blempy.UnifiedAttributeProxy(obj.data, "oink")
 
         proxy.get()
 
         for vertex_attribute in proxy:
             vertex_attribute[:] = 1.0
-        
+
         proxy.set()
 
         # deliberately copy the original array

@@ -17,7 +17,7 @@ vertex colors.
 """
 
 
-class PropertyCollectionAttributeProxy:
+class PropertyCollectionProxy:
     def property_from_key(self):
         if self.property_collection.isidentifier():
             return getattr(self.object, self.property_collection)
@@ -69,7 +69,7 @@ class PropertyCollectionAttributeProxy:
             attr = getattr(property_collection[0], self.atttribute)
             # check if this attribute is a scalar
             length = len(attr) if hasattr(attr, "__len__") else 1
-            attr_type = int if type(attr) is int else np.float32
+            attr_type = type(attr) if type(attr) in {bool, int} else np.float32
             # if we haven't allocated an array yet or its shape has changed, we allocate one
             if self.ndarray is None or items != self.items or length != self.length:
                 self.ndarray = np.empty(items * length, dtype=attr_type)
@@ -110,8 +110,13 @@ class PropertyCollectionAttributeProxy:
             self.atttribute, self.ndarray.ravel()
         )  # ravel() will create a flat view, not a copy, if possible
 
+    def __getitem__(self, key):
+        return self.ndarray[key:key+1]
 
-class VectorCollectionProxy(PropertyCollectionAttributeProxy):
+    def __setitem__(self, key, value):
+        self.ndarray[key] = value
+
+class VectorCollectionProxy(PropertyCollectionProxy):
     def __init__(self, obj: ID, property_collection: str, attribute: str) -> None:
         """
         Initialize a vector attribute proxy.
@@ -228,13 +233,9 @@ class LoopVectorAttributeProxy:
         It is ok to create a proxy for an empty collection, but if the collection is still
         empty when any of the methods are called an exception will be raised.
         """
-        self.loop_start = PropertyCollectionAttributeProxy(
-            mesh, "polygons", "loop_start"
-        )
+        self.loop_start = PropertyCollectionProxy(mesh, "polygons", "loop_start")
         self.loop_start.get()
-        self.loop_total = PropertyCollectionAttributeProxy(
-            mesh, "polygons", "loop_total"
-        )
+        self.loop_total = PropertyCollectionProxy(mesh, "polygons", "loop_total")
         self.loop_total.get()
 
         self.loop_attributes = VectorCollectionProxy(
@@ -267,7 +268,7 @@ class LoopVectorAttributeProxy:
         return self.loop_start.items
 
 
-class AttributeProxy:
+class UnifiedAttributeProxy:
     default_attribute = {
         "BYTE_COLOR": "color",
         "FLOAT_COLOR": "color",
@@ -346,11 +347,11 @@ class AttributeProxy:
 
         match self.domain:
             case "CORNER":
-                self.loop_start = PropertyCollectionAttributeProxy(
+                self.loop_start = PropertyCollectionProxy(
                     mesh, "polygons", "loop_start"
                 )
                 self.loop_start.get()
-                self.loop_total = PropertyCollectionAttributeProxy(
+                self.loop_total = PropertyCollectionProxy(
                     mesh, "polygons", "loop_total"
                 )
                 self.loop_total.get()
