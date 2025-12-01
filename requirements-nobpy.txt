@@ -1,0 +1,6 @@
+numpy==1.26.4
+line-profiler==4.2.0
+fake-bpy-module
+pytest-cov
+pytest-benchmark
+pytest-md-report

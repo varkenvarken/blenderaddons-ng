@@ -13,7 +13,32 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build_all:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        bpy-version: ["4.4.0", "4.5.0"]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+        if [ -f requirements-nobpy.txt ]; then pip install -r requirements.txt; fi
+        pip install "bpy[${{matrix.bpy-version}}]"
+    - name: Test with pytest
+      run: |
+        pytest tests --cov=add_ons --cov-report=xml --benchmark-skip
+
+
+  build_latest:
 
     runs-on: ubuntu-latest
 
