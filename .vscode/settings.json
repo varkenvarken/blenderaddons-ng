@@ -10,5 +10,5 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "markdown-pdf.outputDirectoryRelativePathFile": true,
-    "markdown-pdf.outputDirectory": "docs"
+    "markdown-pdf.outputDirectory": "."
 }

@@ -17,7 +17,7 @@
             padding: 0;
             color: #1a1a1a;
             width: 900px;
-            margin:outer;
+            margin:auto;
         }
 
         header {
@@ -230,7 +230,6 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
 
 <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
 </head>
-
 <body>
   <script>
     mermaid.initialize({
@@ -240,11 +239,11 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
           : 'default'
     });
   </script>
-<p><img src="docs/Blenderaddons ng logo small.png" alt="Blenderaddons ng logo">
+<p><img src="Blenderaddons ng logo small.png" alt="Blenderaddons ng logo">
 <a href="https://www.blender.org/download/releases/4-4/"><img src="blender-version.svg" alt="Blender"></a> <img src="python.svg" alt="Python"> <a href="https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml"><img src="https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml/badge.svg" alt="Test Status"></a> <img src="coverage.svg" alt="Coverage"></p>
 <h1 id="blenderaddons-ng">blenderaddons-ng</h1>
 <p>A Visual Studio Code project to develop, test, and profile Blender add-ons.</p>
-<p>This also the spot where we develop small helper modules that are of general use, like <a href="/blempy.html"><code>blempy</code></a></p>
+<p>This also the spot where we develop small helper modules that are of general use, like <code>blempy</code>, a package to accelerate working with property collections. It has its own <a href="blempy.html">webpage</a>.</p>
 <h2 id="background">background</h2>
 <p>I would like to focus a bit more on automated testing of Blender add-ons.
 And I am not talking about interactively testing an add-on to see if it does what it should do,
@@ -275,17 +274,19 @@ that has its place, but creating and automatically executing unit tests for core
 <p>With the <code>pytest-benchmark</code> package. See <a href="#benchmarking">below</a> for details.</p>
 </li>
 <li>
-<p><input type="checkbox" id="checkbox5"><label for="checkbox5">Move some addons over from the </label><a href="https://github.com/varkenvarken/blenderaddons">blenderaddons repo</a></p>
+<p><input type="checkbox" id="checkbox5" checked="true"><label for="checkbox5">Move some addons over from the </label><a href="https://github.com/varkenvarken/blenderaddons">blenderaddons repo</a></p>
 <ul>
-<li>first one done: <a href="add_ons/select_colinear_edges.py">select_colinear_edges.py</a>   (but tests are not complete yet)</li>
+<li>first one done: <a href="add_ons/select_colinear_edges.py">select_colinear_edges.py</a></li>
+<li>another one: <a href="/add_ons/stonework.py">stonework.py</a></li>
 </ul>
 </li>
 </ul>
 <h2 id="folder-structure">folder structure</h2>
 <ul>
 <li>
-<p>All add-on code lives in <code>/add-ons</code></p>
+<p>All add-on code lives in <a href="/add_ons"><code>/add-ons</code></a></p>
 </li>
+<li></li>
 <li>
 <p>If the add-on is a package (i.e., contains an <strong>init</strong>.py file), it should be in its own subfolder</p>
 <p>(A .zip file will be created in the toplevel directory <code>/packages</code> <strong>not yet implemented</strong>)</p>
@@ -387,19 +388,11 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 <p>Comparing two runs is done on the command line:</p>
 <pre class="hljs"><code><div>pytest-benchmark compare 0001 0002
 </div></code></pre>
-<h2 id="contributing">contributing</h2>
-<p>I am happy to review pull requests with improvements or even complete new add-ons. Just make sure:</p>
-<ul>
-<li>The code is yours,</li>
-<li>is licensed under GPL v3 or later,</li>
-<li>runs on the current Blender version (see label at top of this file),</li>
-<li>and comes with extensive test coverage</li>
-</ul>
 <h2 id="what-about-ai">what about AI?</h2>
 <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/refs/heads/main/docs/brainrot.svg" alt="Brainrot warning" width="150">
 <p>I have mixed feelings about AI. On the one hand, it can save time if you quickly want to cobble up some code, but on the other hand, if you don't have experience writing the code yourself, it is difficult to create a good prompt or review the generated code. Also, LLMs are quick in creating a unit test for a function, but in test-driven development, that is the wrong way around! And unit tests are not just about code that works; they also should test functionality, exceptions, or edge cases. But since it cannot guess the functional requirements (or 'intentions'), it tends to generate poor tests.</p>
 <p>However, they can be used quite effectively to write a quick starter that you can then expand on. After all, it's often easier when you don't have to start from a blank slate. This is true for unit tests as well as new functions. Asking to write a function that does something specific is often quicker than looking it up and implementing the code from scratch. I documented my try at this in <a href="https://blog.michelanders.nl/2025/05/httpsblog.michelanders.nl202505select-colinear-edges-vibe-coding-a-blender-addon.html">this blog article</a>.</p>
-<p>Another thing LLMs are good at is summarizing: you can quickly create docstrings or even a webpage <a href="https://varkenvarken.github.io/blenderaddons-ng/">the webpage for this repo</a> was created with the help of GitHub CoPilot based on the readme. I still had to check the text, but it came formatted with HTML and CSS, saving a huge amount of time (the logo was added later).</p>
+<p>Another thing LLMs are good at is summarizing: you can quickly create docstrings or even a webpage <a href="https://varkenvarken.github.io/blenderaddons-ng/">the webpage for this repo</a> was originally created with the help of GitHub CoPilot based on the readme. I still had to check the text, but it came formatted with HTML and CSS, saving a huge amount of time. But in the end I reworked the whole thing, included the logo, and basically had to rewrite everything in such a way that I can easily convert the markdown to html.</p>
 <p>So, use AI or not? Yes, but sparingly, and verify the results! And please have a good look at the coding style: the LLM probably has seen tons of example code that illustrates a specific bit of functionality, but wasn't particularly focused on code quality. And yes, that is a friendly way to say it often produces beginner code that will be hard to maintain. It also tends to be liberal with comments that describe what the code is doing (which can already be known by looking at the code) instead of describing its intent or providing references (which can be useful when you encounter logic bugs). So yeah, call its code unpythonic if you like 😃</p>
 
 </body>
