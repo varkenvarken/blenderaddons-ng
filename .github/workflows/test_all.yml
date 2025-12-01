@@ -79,13 +79,13 @@ jobs:
 
     - name: Download coverage badge
       run: |
-        curl -o coverage.svg "https://img.shields.io/badge/Coverage-${{ steps.coverage.outputs.coverage }}%25-${{ steps.badge_color.outputs.color }}"
+        curl -o docs/coverage.svg "https://img.shields.io/badge/Coverage-${{ steps.coverage.outputs.coverage }}%25-${{ steps.badge_color.outputs.color }}"
      
     - name: Commit coverage badge
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add coverage.svg
+        git add docs/coverage.svg
         git commit -m "Update coverage badge [skip ci]" || echo "No changes to commit"
         git push
       env:
