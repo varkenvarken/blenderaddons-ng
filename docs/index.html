@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
+<title>README.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
     <title>blenderaddons-ng</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Amaranth font from Google Fonts -->
@@ -15,6 +16,8 @@
             margin: 0;
             padding: 0;
             color: #1a1a1a;
+            width: 900px;
+            margin:outer;
         }
 
         header {
@@ -120,150 +123,284 @@
             margin-right: 6px;
         }
     </style>
+
+
+<style>
+/*
+
+github.com style (c) Vasily Polovnyov <vast@whiteants.net>
+
+*/
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  color: #333;
+  background: #f8f8f8;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #998;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #333;
+  font-weight: bold;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #008080;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #d14;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #900;
+  font-weight: bold;
+}
+
+.hljs-subst {
+  font-weight: normal;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #458;
+  font-weight: bold;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #000080;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #009926;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #990073;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #0086b3;
+}
+
+.hljs-meta {
+  color: #999;
+  font-weight: bold;
+}
+
+.hljs-deletion {
+  background: #fdd;
+}
+
+.hljs-addition {
+  background: #dfd;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
 </head>
 
 <body>
-    <header class="container">
-        <img src="Blenderaddons ng logo.png" id="logo" alt="blenderaddons-ng logo">
-        <h1><a href="https://github.com/varkenvarken/blenderaddons-ng">blenderaddons-ng</a></h1>
-        <p>A Visual Studio Code project to develop, test, and profile Blender add-ons</p>
-        <div class="badge-list">
-            <a href="https://github.com/varkenvarken/blenderaddons-ng"><img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/docs/repobadge.svg"
-                alt="Repository badge with link" /></a>
-            <br />
-            <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/blender-version.svg"
-                alt="Blender Version badge" />
-            <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/python.svg"
-                alt="Python Version badge" />
-            <a href="https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml">
-                <img src="https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml/badge.svg"
-                    alt="Test Status" />
-            </a>
-            <img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/main/coverage.svg"
-                alt="Test coverage badge" />
-        </div>
-    </header>
-    <div class="container">
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<p><img src="docs/Blenderaddons ng logo small.png" alt="Blenderaddons ng logo">
+<a href="https://www.blender.org/download/releases/4-4/"><img src="blender-version.svg" alt="Blender"></a> <img src="python.svg" alt="Python"> <a href="https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml"><img src="https://github.com/varkenvarken/blenderaddons-ng/actions/workflows/test_all.yml/badge.svg" alt="Test Status"></a> <img src="coverage.svg" alt="Coverage"></p>
+<h1 id="blenderaddons-ng">blenderaddons-ng</h1>
+<p>A Visual Studio Code project to develop, test, and profile Blender add-ons.</p>
+<p>This also the spot where we develop small helper modules that are of general use, like <a href="/blempy.md"><code>blempy</code></a></p>
+<h2 id="background">background</h2>
+<p>I would like to focus a bit more on automated testing of Blender add-ons.
+And I am not talking about interactively testing an add-on to see if it does what it should do,
+that has its place, but creating and automatically executing unit tests for core functionality in add-ons.</p>
+<p>This requires a clean setup and some thinking, and this repository should reflect this setup.</p>
+<p>The name of the repo reflects that this is (sort of) intended as the <code>next generation</code> of the add-ons in the <a href="https://github.com/varkenvarken/blenderaddons">blenderaddons repo</a>, although I do not intend to port everything over.</p>
+<h2 id="goals">goals</h2>
+<ul>
+<li>
+<p><input type="checkbox" id="checkbox0" checked="true"><label for="checkbox0">Create a repository / Visual Studio Code project for Blender add-ons</label></p>
+<p>With a folder structure that allows us to maintain multiple add-ons in the same repo</p>
+</li>
+<li>
+<p><input type="checkbox" id="checkbox1" checked="true"><label for="checkbox1">suitable for DevContainer development</label></p>
+<p>so that we can easily change Blender and Python versions.</p>
+<p>Note that we do not install the Blender application; the goal is to use the stand-alone <code>bpy</code> module to automate testing and profiling. Also, although DevContainer sounds VS Code-specific, it isn´t, as we actually work based on a Dockerfile that can be used to build and deploy independently of VS Code.</p>
+</li>
+<li>
+<p><input type="checkbox" id="checkbox2" checked="true"><label for="checkbox2">suitable for automated testing</label></p>
+<p>Both with <code>pytest</code> and <code>pytest-coverage</code> in a way we can automate with GitHub actions as well. The configuration that is currently implemented works both with VSCode test discovery as well as in <a href=".github/workflows/test_all.yml">the automated test workflow</a> in GitHub actions.</p>
+</li>
+<li>
+<p><input type="checkbox" id="checkbox3" checked="true"><label for="checkbox3">suitable for profiling</label></p>
+<p>With the <code>line_profiler</code> package. See <a href="#profiling">below</a> for details.</p>
+</li>
+<li>
+<p><input type="checkbox" id="checkbox4" checked="true"><label for="checkbox4">suitable for benchmarking</label></p>
+<p>With the <code>pytest-benchmark</code> package. See <a href="#benchmarking">below</a> for details.</p>
+</li>
+<li>
+<p><input type="checkbox" id="checkbox5"><label for="checkbox5">Move some addons over from the </label><a href="https://github.com/varkenvarken/blenderaddons">blenderaddons repo</a></p>
+<ul>
+<li>first one done: <a href="add_ons/select_colinear_edges.py">select_colinear_edges.py</a>   (but tests are not complete yet)</li>
+</ul>
+</li>
+</ul>
+<h2 id="folder-structure">folder structure</h2>
+<ul>
+<li>
+<p>All add-on code lives in <code>/add-ons</code></p>
+</li>
+<li>
+<p>If the add-on is a package (i.e., contains an <strong>init</strong>.py file), it should be in its own subfolder</p>
+<p>(A .zip file will be created in the toplevel directory <code>/packages</code> <strong>not yet implemented</strong>)</p>
+</li>
+<li>
+<p>tests are located in the <code>/tests</code> folder</p>
+<p>They should have a name starting with <code>test_</code> and should contain <code>pytest</code> discoverable tests</p>
+</li>
+</ul>
+<h2 id="additional-information">additional information</h2>
+<p>I have written some blog articles that provide some background information and show this repo in action:</p>
+<ul>
+<li><a href="https://blog.michelanders.nl/2025/06/new-blenderaddons-repository-aimed-at-developers.html">New blenderaddons repo aimed at developers</a></li>
+<li><a href="https://blog.michelanders.nl/2025/06/Colinearity-tests-in-Blender-meshes-using-Numpy.html">Colinearity tests in Blender meshes using Numpy</a></li>
+<li><a href="https://blog.michelanders.nl/2025/06/automatic-unit-tests-for-blender-add-ons.html">Automatic unit tests for Blender add-ons</a></li>
+<li><a href="https://blog.michelanders.nl/2025/06/stonework-blender-add-on-to-create-stone-walls.html">Stonework - A Blender add-on to create stone walls</a></li>
+<li><a href="https://blog.michelanders.nl/2025/10/efficient-vertex-manipulation-inblender-with-numpy.html">Efficient Vertex Manipulation in Blender with NumPy</a></li>
+<li><a href="https://blog.michelanders.nl/2025/10/perfornce-of-umpy-operations-in-blender.html">Performance of numpy operations in Blender</a></li>
+<li><a href="https://blog.michelanders.nl/2025/10/how-to-profile-blender-add-on.html">How to profile a Blender add-on</a></li>
+</ul>
+<h2 id="installation">installation</h2>
+<pre class="hljs"><code><div>git <span class="hljs-built_in">clone</span> https://github.com/varkenvarken/blenderaddons-ng.git
+<span class="hljs-built_in">cd</span> ./blenderaddons-ng
+</div></code></pre>
+<p>Just open the folder in VS Code. It will probably prompt you, but you can also explicitly call Rebuild Container from
+the command palette and then start developing inside it.</p>
+<h2 id="requirements">requirements</h2>
+<p>The <a href="Dockerfile">Dockerfile</a> creates a Ubuntu 24.04 image with all binary dependencies for Blender installed.
+It also installs downloads and compiles the exact Python version that the current version of Blender comes bundled with
+(This may take some time because compiling is CPU-intensive.)</p>
+<p>It does <em>not</em> install Blender, but installs the <code>bpy</code> module from Pypi. This allows us to run the add-ons headless.
+It also installs/upgrades the packages mentioned in <a href="requirements.txt">requirements.txt</a>, or, as is the case with <code>numpy</code>,
+<em>downgrades</em> it to the version bundled with Blender. Other notable packages it installs are:</p>
+<ul>
+<li>
+<p><strong>fake-bpy-module</strong> so that we get nice type checking in vscode, but see pyproject.toml file because we needed to
+disable the invalid type form warning. This is because the pylance/pyright people insist that the Blender implementation
+of properties is wrong, which it isn´t: They seem to forget that annotations are for more than type hinting.
+See <a href="https://github.com/microsoft/pylance-release/issues/5457#issuecomment-1937101627">here for more info</a>.
+If you are annoyed by this, you can disable typechecking altogether by adding <code>typeCheckingMode = &quot;off&quot;</code> to your pyproject.toml file</p>
+</li>
+<li>
+<p><strong>pytest-cov</strong> for creating test coverage reports; pytest itself is installed by VS Code when creating the container</p>
+</li>
+<li>
+<p><strong>pytest-benchmark</strong> for creating benchmarks (See: <a href="#benchmarking">benchmarking</a>)</p>
+</li>
+<li>
+<p><strong>line_profiler</strong> to provide line-by-line profiling (See: <a href="#profiling">profiling</a>)</p>
+</li>
+</ul>
+<h2 id="workflow">workflow</h2>
+<ol>
+<li>Copy add_ons/example_simple.py to add_ons/&lt;new_name&gt;.py</li>
+</ol>
+<p>It provides a good starting point for simple add-ons</p>
+<ol start="2">
+<li>Change the code to your liking</li>
+</ol>
+<p>Don´t forget to update the <code>bl_info</code> dictionary and to define the <code>OPERATOR_NAME</code> variable (that is used in the test script)</p>
+<ol start="3">
+<li>copy tests/test_example_simple.py to tests/test_&lt;new_name&gt;.py</li>
+</ol>
+<p>And make sure to create good tests that ensure good coverage as well.</p>
+<h2 id="profiling">profiling</h2>
+<p>The file <a href="add_ons/example_simple.py">example_simple.py</a> contains code showing how to profile (parts of) an operator using the
+<a href="https://pypi.org/project/line-profiler/">line-profiler package</a>.</p>
+<p>No profiling is done if the package isn´t available or if the LINE_PROFILE environment variable is not set to &quot;1&quot;.
+To create a profile, simply run:</p>
+<pre class="hljs"><code><div>LINE_PROFILE=1 python3 add_ons/example_simple.py
+</div></code></pre>
+<p>It will produce output like:</p>
+<pre class="hljs"><code><div>Timer unit: 1e-09 s
 
-        <h2>Background</h2>
-        <p>
-            <a href="https://github.com/varkenvarken/blenderaddons-ng"><strong>blenderaddons-ng</strong></a> focuses on modern, automated testing of Blender add-ons, with an emphasis
-            on creating and running unit tests for core add-on functionality, rather than just interactive testing. The
-            repository provides a clean, reproducible development environment for building, testing, profiling, and
-            benchmarking Blender add-ons.
-        </p>
-        <p>
-            This project is the <strong>next generation</strong> of the <a class="github-link"
-                href="https://github.com/varkenvarken/blenderaddons">blenderaddons</a> repo, designed for better
-            structure, automation, and developer experience.
-        </p>
+Total time: 8.615e-06 s
+File: /workspaces/blenderaddons-ng/add_ons/example_simple.py
+Function: do_execute at line 44
 
-        <h2>Project Goals</h2>
-        <ul>
-            <li>Provide a Visual Studio Code project and repository structure for developing multiple Blender add-ons.
-            </li>
-            <li>Enable easy development in DevContainers, allowing for flexible Blender and Python versions.</li>
-            <li>Support automated testing using <code>pytest</code> and <code>pytest-cov</code>, integrated with GitHub
-                Actions.</li>
-            <li>Facilitate profiling and benchmarking of add-ons using <code>line_profiler</code> and
-                <code>pytest-benchmark</code>.
-            </li>
-            <li>Gradually migrate and modernize add-ons from the <a class="github-link"
-                    href="https://github.com/varkenvarken/blenderaddons">blenderaddons</a> repository.</li>
-        </ul>
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    44                                               @profile  # type: ignore (if line_profiler is available)
+    45                                               def do_execute(self, context: Context) -&gt; None:
+    46                                                   &quot;&quot;&quot;Expensive part is moved out of the execute method to allow profiling.
+    47                                           
+    48                                                   Note that no profiling is done if line_profiler is not available or
+    49                                                   if the environment variable `LINE_PROFILE` is not set to &quot;1&quot;.
+    50                                                   &quot;&quot;&quot;
+    51         1       1031.0   1031.0     12.0          obj: Object | None = context.active_object
+    52         1       7584.0   7584.0     88.0          obj.location.x += self.amount  # type: ignore (because of the poll() method that ensures obj is not None)
+</div></code></pre>
+<p>Note: you cannot profile the <code>execute()</code> method directly, so you would typically factor out expensive code and profile just that. If you don´t, i.e. apply the <code>@profile</code> decorator directly to the <code>execute()</code> method, the <code>register_class()</code> function will complain:</p>
+<pre class="hljs"><code><div>ValueError: expected Operator, MESH_OT_select_colinear_edges class &quot;execute&quot; function to have 2 args, found 0
+</div></code></pre>
+<h2 id="benchmarking">benchmarking</h2>
+<p>Profiling is not the same as benchmarking, of course, so support for the <a href="https://pytest-benchmark.readthedocs.io/en/latest/">pytest-benchmark package</a> was added.</p>
+<p>The file <a href="tests/test_example_simple.py">test_example_simple.py</a> provides an example benchmark, and all benchmarks are stored in the <code>.benchmarks</code> directory.</p>
+<p>I have opted to put them in .gitignore because you wouldn't usually need to save them.</p>
+<p>Benchmarks are excluded from the normal runs and are also not part of the <a href=".github/workflows/test_all.yml">automated workflow</a> because they sometimes cause VS Code to hang. So, a VS Code task <code>Run benchmarks</code> is configured to run all benchmarks.</p>
+<p>Comparing two runs is done on the command line:</p>
+<pre class="hljs"><code><div>pytest-benchmark compare 0001 0002
+</div></code></pre>
+<h2 id="contributing">contributing</h2>
+<p>I am happy to review pull requests with improvements or even complete new add-ons. Just make sure:</p>
+<ul>
+<li>The code is yours,</li>
+<li>is licensed under GPL v3 or later,</li>
+<li>runs on the current Blender version (see label at top of this file),</li>
+<li>and comes with extensive test coverage</li>
+</ul>
+<h2 id="what-about-ai">what about AI?</h2>
+<img src="https://raw.githubusercontent.com/varkenvarken/blenderaddons-ng/refs/heads/main/docs/brainrot.svg" alt="Brainrot warning" width="150">
+<p>I have mixed feelings about AI. On the one hand, it can save time if you quickly want to cobble up some code, but on the other hand, if you don't have experience writing the code yourself, it is difficult to create a good prompt or review the generated code. Also, LLMs are quick in creating a unit test for a function, but in test-driven development, that is the wrong way around! And unit tests are not just about code that works; they also should test functionality, exceptions, or edge cases. But since it cannot guess the functional requirements (or 'intentions'), it tends to generate poor tests.</p>
+<p>However, they can be used quite effectively to write a quick starter that you can then expand on. After all, it's often easier when you don't have to start from a blank slate. This is true for unit tests as well as new functions. Asking to write a function that does something specific is often quicker than looking it up and implementing the code from scratch. I documented my try at this in <a href="https://blog.michelanders.nl/2025/05/httpsblog.michelanders.nl202505select-colinear-edges-vibe-coding-a-blender-addon.html">this blog article</a>.</p>
+<p>Another thing LLMs are good at is summarizing: you can quickly create docstrings or even a webpage <a href="https://varkenvarken.github.io/blenderaddons-ng/">the webpage for this repo</a> was created with the help of GitHub CoPilot based on the readme. I still had to check the text, but it came formatted with HTML and CSS, saving a huge amount of time (the logo was added later).</p>
+<p>So, use AI or not? Yes, but sparingly, and verify the results! And please have a good look at the coding style: the LLM probably has seen tons of example code that illustrates a specific bit of functionality, but wasn't particularly focused on code quality. And yes, that is a friendly way to say it often produces beginner code that will be hard to maintain. It also tends to be liberal with comments that describe what the code is doing (which can already be known by looking at the code) instead of describing its intent or providing references (which can be useful when you encounter logic bugs). So yeah, call its code unpythonic if you like 😃</p>
 
-        <h2>Folder Structure</h2>
-        <ul>
-            <li><b>/add-ons</b> — all add-on code lives here; each add-on package has its own subfolder if it includes
-                an <code>__init__.py</code>.</li>
-            <li><b>/tests</b> — contains <code>pytest</code>-discoverable tests, prefixed with <code>test_</code>.</li>
-            <li><b>/packages</b> — (planned) to store zipped add-on packages.</li>
-        </ul>
-
-        <h2>Installation</h2>
-        <pre><code>git clone https://github.com/varkenvarken/blenderaddons-ng.git
-cd ./blenderaddons-ng
-</code></pre>
-        <p>
-            Open the folder in VS Code. If prompted, rebuild the DevContainer, or select "Rebuild Container" from the
-            command palette to begin developing.
-        </p>
-
-        <h2>Requirements</h2>
-        <ul>
-            <li>Ubuntu 24.04 base image (via Dockerfile) with all Blender dependencies</li>
-            <li>Python version matched to Blender (built from source)</li>
-            <li><code>bpy</code> module from PyPI (headless Blender)</li>
-            <li><code>fake-bpy-module</code> for VS Code type checking</li>
-            <li><code>pytest-cov</code> for test coverage</li>
-            <li><code>pytest-benchmark</code> for benchmarking</li>
-            <li><code>line_profiler</code> for profiling</li>
-        </ul>
-        <p>
-            See <a class="github-link"
-                href="https://github.com/varkenvarken/blenderaddons-ng/blob/main/requirements.txt">requirements.txt</a>
-            and the <a class="github-link"
-                href="https://github.com/varkenvarken/blenderaddons-ng/blob/main/Dockerfile">Dockerfile</a> for details.
-        </p>
-
-        <h2>Development Workflow</h2>
-        <ol>
-            <li>Copy <code>add_ons/example_simple.py</code> to <code>add_ons/&lt;new_name&gt;.py</code> as a starting
-                point.</li>
-            <li>Modify the code, update the <code>bl_info</code> dictionary and <code>OPERATOR_NAME</code> variable.
-            </li>
-            <li>Copy <code>tests/test_example_simple.py</code> to <code>tests/test_&lt;new_name&gt;.py</code> and write
-                thorough tests.</li>
-        </ol>
-
-        <h2>Profiling</h2>
-        <p>
-            Use <a href="https://pypi.org/project/line-profiler/" class="github-link">line_profiler</a> to profile
-            operators. Example:
-        </p>
-        <pre><code>LINE_PROFILE=1 python3 add_ons/example_simple.py
-</code></pre>
-        <p>
-            Expensive code should be factored out from <code>execute()</code> for profiling.
-        </p>
-
-        <h2>Benchmarking</h2>
-        <p>
-            Use <a href="https://pytest-benchmark.readthedocs.io/en/latest/" class="github-link">pytest-benchmark</a> to
-            measure performance. Example:
-        </p>
-        <pre><code>pytest-benchmark compare 0001 0002
-</code></pre>
-        <p>
-            Example benchmarks are in <code>tests/test_example_simple.py</code>. Results are stored in
-            <code>.benchmarks</code> (gitignored).
-        </p>
-
-        <h2>Contributing</h2>
-        <p>
-            Pull requests for improvements or new add-ons are welcome! Please ensure that your contributions:
-        </p>
-        <ul>
-            <li>Are your own work and licensed GPL v3 or later</li>
-            <li>Are compatible with the current Blender version</li>
-            <li>Include comprehensive tests</li>
-        </ul>
-        <p>
-            See the <a class="github-link" href="https://github.com/varkenvarken/blenderaddons-ng">GitHub repository</a>
-            for more details and to get involved.
-        </p>
-
-        <h2>License</h2>
-        <p>
-            This project is open source and available under the <a class="github-link"
-                href="https://github.com/varkenvarken/blenderaddons-ng/blob/main/LICENSE" target="_blank"
-                rel="noopener">GPL v3 or later</a>.
-        </p>
-    </div>
-    <footer>
-        &copy; 2025 <a class="github-link" href="https://github.com/varkenvarken" target="_blank"
-            rel="noopener">varkenvarken</a> &mdash; blenderaddons-ng
-    </footer>
 </body>
-
 </html>

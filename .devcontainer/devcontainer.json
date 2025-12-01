@@ -15,7 +15,9 @@
 				"bierner.markdown-mermaid",
 				"ms-python.vscode-pylance",
 				"ms-python.python",
-				"ms-python.debugpy"
+				"ms-python.debugpy",
+				"yzhang.markdown-all-in-one",
+				"bierner.markdown-checkbox"
 			]
 		}
 	}
