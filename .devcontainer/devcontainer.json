@@ -12,7 +12,10 @@
 		"vscode": {
 			"extensions": [
 				"jsynowiec.vscode-insertdatestring",
-				"bierner.markdown-mermaid"
+				"bierner.markdown-mermaid",
+				"ms-python.vscode-pylance",
+				"ms-python.python",
+				"ms-python.debugpy"
 			]
 		}
 	}
