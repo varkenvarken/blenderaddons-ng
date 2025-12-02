@@ -5,8 +5,6 @@
 
 A Visual Studio Code project to develop, test, and profile Blender add-ons.
 
-This also the spot where we develop small helper modules that are of general use, like `blempy`, a package to accelerate working with property collections. It has its own [webpage](blempy.html).
-
 ## background
 
 I would like to focus a bit more on automated testing of Blender add-ons.
@@ -49,7 +47,7 @@ The name of the repo reflects that this is (sort of) intended as the `next gener
 ## folder structure
 
 - All add-on code lives in [`/add-ons`](/add_ons)
-- 
+
 - If the add-on is a package (i.e., contains an __init__.py file), it should be in its own subfolder
   
   (A .zip file will be created in the toplevel directory `/packages` **not yet implemented**)

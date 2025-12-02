@@ -5,3 +5,4 @@ fake-bpy-module
 pytest-cov
 pytest-benchmark
 pytest-md-report
+beautifulsoup4

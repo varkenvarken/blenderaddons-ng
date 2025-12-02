@@ -17,7 +17,10 @@
 				"ms-python.python",
 				"ms-python.debugpy",
 				"yzhang.markdown-all-in-one",
-				"bierner.markdown-checkbox"
+				"bierner.markdown-checkbox",
+				"charliermarsh.ruff",
+				"ritwickdey.LiveServer",
+				"yzane.markdown-pdf"
 			]
 		}
 	}

@@ -7,6 +7,21 @@
             "label": "Run benchmarks",
             "type": "shell",
             "command": "pytest tests --benchmark-autosave --benchmark-only "
+        },
+        {
+            "label": "Swap HTML Head with Template",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/bin/headswap.py",
+                "${file}",
+                "${workspaceFolder}/docs/header.template"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
         }
     ]
 }
