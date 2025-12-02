@@ -624,6 +624,86 @@ If you are annoyed by this, you can disable typechecking altogether by adding
   <p>
    And make sure to create good tests that ensure good coverage as well.
   </p>
+  <h3 id="packages">
+   packages
+  </h3>
+  <p>
+   if your add-on is not a single python file but a package, i.e. a folder containing an
+   <strong>
+    init
+   </strong>
+   .py file and perhaps other files and even subfolders,
+yuou will have to think of a few things things:
+  </p>
+  <ol>
+   <li>
+    <p>
+     packaging, i.e. creating a .zip file so you can install the thing in Blender.
+    </p>
+    <p>
+     this is made simple but the
+     <code>
+      Create packages
+     </code>
+     task. Simply select
+     <code>
+      Terminal -&gt; Run task ... -&gt; Create packages
+     </code>
+     and every subfolder inside the add_ons subfolder will be zip into its own zip file inside the
+     <a href="/packages/">
+      packages
+     </a>
+     folder.
+    </p>
+   </li>
+   <li>
+    <p>
+     bundling external
+     <code>
+      pypi
+     </code>
+     packages into your add-on.
+    </p>
+    <p>
+     An example would be the
+     <a href="/add_ons/vertexcolors/">
+      vertexcolors add-on
+     </a>
+     . It uses the
+     <a href="https://pypi.org/project/blempy/">
+      blempy package
+     </a>
+     and
+the easiest way to do this is
+    </p>
+    <pre class="hljs"><code><div><span class="hljs-built_in">cd</span> add_ons/vertexcolors
+python3 -m pip install -t . blempy
+</div></code></pre>
+    <p>
+     This will install the package into the local directory instead of into
+     <code>
+      site-packages
+     </code>
+     . It is possible to have your add-on use the
+     <code>
+      pip
+     </code>
+     module and install it at runtime into your Blender Python distro but quite frankly that is a pain, and this way far easier. Yes, it will mean your add-on will be a little bit bloated, but a couple of kilobytes never hurt nobody.
+    </p>
+   </li>
+   <li>
+    <p>
+     testing
+    </p>
+    <p>
+     which is just as uncomplicated as testing a single file add-on. Just check
+     <a href="/tests/test_vertexcolors.py">
+      this test
+     </a>
+     for an example.
+    </p>
+   </li>
+  </ol>
   <h2 id="profiling">
    profiling
   </h2>

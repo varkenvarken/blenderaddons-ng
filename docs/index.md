@@ -115,6 +115,31 @@ It also installs/upgrades the packages mentioned in [requirements.txt](requireme
 
   And make sure to create good tests that ensure good coverage as well.
 
+### packages
+
+if your add-on is not a single python file but a package, i.e. a folder containing an __init__.py file and perhaps other files and even subfolders,
+yuou will have to think of a few things things:
+
+1. packaging, i.e. creating a .zip file so you can install the thing in Blender.
+
+    this is made simple but the `Create packages` task. Simply select `Terminal -> Run task ... -> Create packages` and every subfolder inside the add_ons subfolder will be zip into its own zip file inside the [packages](/packages/) folder.
+
+2. bundling external `pypi` packages into your add-on.
+
+    An example would be the [vertexcolors add-on](/add_ons/vertexcolors/). It uses the [blempy package](https://pypi.org/project/blempy/) and
+    the easiest way to do this is
+
+    ```bash
+    cd add_ons/vertexcolors
+    python3 -m pip install -t . blempy
+    ```
+
+    This will install the package into the local directory instead of into `site-packages`. It is possible to have your add-on use the `pip` module and install it at runtime into your Blender Python distro but quite frankly that is a pain, and this way far easier. Yes, it will mean your add-on will be a little bit bloated, but a couple of kilobytes never hurt nobody. 
+
+3. testing
+
+    which is just as uncomplicated as testing a single file add-on. Just check [this test](/tests/test_vertexcolors.py) for an example.
+    
 ## profiling
 
 The file [example_simple.py](add_ons/example_simple.py) contains code showing how to profile (parts of) an operator using the 

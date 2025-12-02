@@ -1,0 +1,2 @@
+[run]
+omit = add_ons/*/blempy/*
