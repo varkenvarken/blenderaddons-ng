@@ -10,7 +10,7 @@ RUN apt-get update && \
     libffi-dev uuid-dev \
     git git-lfs subversion cmake libx11-dev libxxf86vm-dev libxcursor-dev libxi-dev libxrandr-dev libxinerama-dev libegl-dev \
     libwayland-dev wayland-protocols libxkbcommon-dev libdbus-1-dev linux-libc-dev \
-    libsm6 libxext6 libxrender-dev
+    libsm6 libxext6 libxrender-dev zip
 
 # Download and install Python 3.11.11
 RUN wget https://www.python.org/ftp/python/3.11.11/Python-3.11.11.tgz && \

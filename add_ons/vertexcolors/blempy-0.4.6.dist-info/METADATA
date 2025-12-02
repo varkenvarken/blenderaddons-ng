@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: blempy
+Version: 0.4.6
+Summary: A small example package
+Author-email: varkenvarken <author@example.com>
+License-Expression: GPL-3.0-or-later
+Project-URL: Homepage, https://github.com/varkenvarken/blempy
+Project-URL: Issues, https://github.com/varkenvarken/blempy/issues
+Classifier: Development Status :: 4 - Beta
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# blempy — Blender ↔ NumPy helpers
+
+`blempy` provides small, safe utilities to efficiently transfer Blender property-collection attributes (e.g. vertex coordinates) to/from NumPy arrays and perform vectorized operations with minimal Python overhead.
+
+More information on [the website](https://varkenvarken.github.io/blempy/) accompanying this repo.

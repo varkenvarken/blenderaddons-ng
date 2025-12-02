@@ -50,7 +50,7 @@ The name of the repo reflects that this is (sort of) intended as the `next gener
 
 - If the add-on is a package (i.e., contains an __init__.py file), it should be in its own subfolder
   
-  (A .zip file will be created in the toplevel directory `/packages` **not yet implemented**)
+  (A .zip file will be created in the toplevel directory `/packages` for every subfolder when the task create packages is executed)
 
 - tests are located in the `/tests` folder
 

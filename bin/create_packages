@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# create zip files for all packages (i.e. subfolders) in the add_ons folder
+# the /package directory is created if it doesn´t exist
+# to create packages that Blender can understand, we include the subfolder itself in the zip file
+
+# Resolve workspace root (script lives in bin/)
+workspace_root="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$workspace_root"
+
+mkdir -p packages
+
+# enable nullglob so the loop doesn't run with a literal pattern if no dirs
+shopt -s nullglob
+
+for d in add_ons/*/; do
+    # skip if not a directory
+    [ -d "$d" ] || continue
+    base=$(basename "$d")
+    # skip folders starting with an underscore
+    [[ "$base" == _* ]] && continue
+    zipfile="$workspace_root/packages/$base.zip"
+    if [ -f "$zipfile" ]; then
+        rm -f "$zipfile"
+    fi
+    # create the actual zip file, making sure we include the subfolder itself
+    (cd add_ons && zip -r "$zipfile" $base)
+done

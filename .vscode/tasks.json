@@ -22,6 +22,19 @@
                 "panel": "shared"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Create packages",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "${workspaceFolder}/bin/create_packages"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
         }
     ]
 }
