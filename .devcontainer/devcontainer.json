@@ -1,13 +1,7 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+// For format details, see https://aka.ms/devcontainer.json.
 {
-	"name": "Existing Dockerfile",
-	"build": {
-		// Sets the run context to one level up instead of the .devcontainer folder.
-		"context": "..",
-		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
-		"dockerfile": "../Dockerfile"
-	},
+	"name": "Python 3.13",
+	"image": "mcr.microsoft.com/devcontainers/python:1-3.13-bookworm",
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -23,20 +17,6 @@
 				"yzane.markdown-pdf"
 			]
 		}
-	}
-
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "cat /etc/os-release",
-
-	// Configure tool-specific properties.
-	// "customizations": {},
-
-	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "devcontainer"
+	},
+	"postCreateCommand": "sudo rm -f /etc/apt/sources.list.d/yarn.list && sudo apt-get update && sudo apt-get install -y libxkbcommon-x11-0 libsm6 libxrender1 libfontconfig1 ffmpeg libxext6 && python -m pip install -r requirements.txt"
 }

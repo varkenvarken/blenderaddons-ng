@@ -1,5 +1,5 @@
-numpy==1.26.4
-bpy==5.0.0
+numpy==2.3.4
+bpy==5.3.0
 line-profiler==4.2.0
 fake-bpy-module
 pytest-cov
